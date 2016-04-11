@@ -4,6 +4,7 @@ from time import sleep
 
 class peer_node(threading.Thread):
     node_id = None
+    conn = None
 
     def __init__(self, id):
         self.node_id = id
@@ -12,9 +13,4 @@ class peer_node(threading.Thread):
 
     def run(self):
         while True:
-            try:
-                print 'Peer running'
-                sleep(1000)
-            except Exception as e:
-                print e
-                return
+            

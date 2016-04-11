@@ -19,7 +19,7 @@ class normal_node(threading.Thread):
         while True:
             try:
                 print 'User running'
-                self.conn.connect('localhost', constants.FILES_LISTEN_PORT)
+                self.conn.connect('localhost', constants.LOGIN_PORT)
                 self.conn.send({
                     'type': 'I_AM_ONLINE',
                     'node_id': self.node_id

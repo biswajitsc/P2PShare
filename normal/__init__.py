@@ -3,9 +3,6 @@ import threading
 import jsocket
 import constants
 
-from time import sleep
-
-
 class normal_node(threading.Thread):
     node_id = None
     conn = None
@@ -15,13 +12,7 @@ class normal_node(threading.Thread):
         threading.Thread.__init__(self)
         print 'Creating normal node'
         self.conn = jsocket.Client()
-        while True:
-            print 'Enter the folder path to be shared : '
-            shared_folder = raw_input().strip()
-            if not os.path.isdir(shared_folder):
-                print 'Folder not found'
-            else:
-                break
+        shared_folder = 'Data/' + str(node_id)
         print 'Shared folder', shared_folder
         self.conn.connect('localhost', constants.LOGIN_PORT)
         self.conn.send({

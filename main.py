@@ -4,7 +4,6 @@ import peer
 import sys
 import server
 
-
 def main():
     print 'Main starting'
     if len(sys.argv) < 2:
@@ -25,6 +24,8 @@ def main():
 
         n_node = normal.normal_node(node_id)
         # p_node = peer.peer_node(node_id+1)
+
+        n_node.daemon = True
 
         n_node.start()
         # p_node.start()

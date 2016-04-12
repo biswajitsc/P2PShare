@@ -6,7 +6,6 @@ import threading
 import thread
 import sleep
 
-
 class Server:
     active_peers = set()
     active_peers_lock = threading.Lock()
@@ -75,4 +74,4 @@ class Server:
                     self.active_peers_lock.acquire()
                     self.active_peers.discard(peer)
                     self.active_peers_lock.release()
-            sleep(max(0, 60 - (time.time() - sec_start)))
+            time.sleep(max(0, 60 - (time.time() - sec_start)))

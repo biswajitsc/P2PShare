@@ -14,3 +14,10 @@ class peer_node(threading.Thread):
     def run(self):
         while True:
             pass
+    
+    def file_list_manager(self, data):
+        for f in data.keylist():
+            if f.startswith('file'):
+                f = data[f]
+                self.file_list.insert(f)
+                self.file_time = time.time()

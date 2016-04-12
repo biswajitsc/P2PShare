@@ -8,18 +8,21 @@ import thread
 
 class Server:
     conn = None
+
     active_peers = set()
+    active_peers_lock = threading.Lock()
 
     def __init__(self):
         print 'Server running'
-        self.conn = jsocket.Server('localhost', constants.LOGIN_PORT)
+        self.sock = jsocket.Server('localhost', constants.LOGIN_PORT)
 
     def run(self):
         while True:
-            self.conn.accept()
-            data = self.conn.recv()
+            conn = self.sock.accept()
+            data = self.conn.recv(conn)
             if data['type'] == 'GET_PEERS':
-                thread.start_new_thread(self.conn.send, (self.get_peers(),))
+                thread.start_new_thread(
+                    self.sock.send_and_close, (self.client, self.get_peers(),))
             if data['type'] == 'PEER_OFFLINE':
                 thread.start_new_thread(self.peer_offline, (data['peer'],))
 
@@ -30,12 +33,7 @@ class Server:
             peer_list['peer' + cnt] = p
         return peer_list
 
-    def file_list_manager(self, data):
-        for f in data.keylist():
-            if f.startswith('file'):
-                f = data[f]
-                self.file_list.insert(f)
-                self.file_time = time.time()
-
-    def peer_offline():
-        pass
+    def peer_offline(self, peer_id):
+        self.active_peers_lock.acquire()
+        self.active_peers.discard(peer_id)
+        self.active_peers_lock.release()

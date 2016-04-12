@@ -18,7 +18,6 @@ class Server(object):
     """
 
     backlog = 100
-    client = None
 
     def __init__(self, host, port):
         self.socket = socket.socket()
@@ -30,26 +29,28 @@ class Server(object):
 
     def accept(self):
         # if a client is already connected, disconnect it
-        if self.client:
-            self.client.close()
-        self.client, self.client_addr = self.socket.accept()
-        return self
+        client, client_addr = self.socket.accept()
+        return client, client_addr
 
-    def send(self, data):
-        if not self.client:
+    def send(self, client, data):
+        if not client:
             raise Exception('Cannot send data, no client is connected')
-        _send(self.client, data)
+        _send(client, data)
         return self
 
-    def recv(self):
-        if not self.client:
+    def send_and_close(self, client, data):
+        if not client:
+            raise Exception('Cannot send data, no client is connected')
+        _send(client, data)
+        client.close()
+        return self
+
+    def recv(self, client):
+        if not client:
             raise Exception('Cannot receive data, no client is connected')
-        return _recv(self.client)
+        return _recv(client)
 
     def close(self):
-        if self.client:
-            self.client.close()
-            self.client = None
         if self.socket:
             self.socket.close()
             self.socket = None

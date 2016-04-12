@@ -6,7 +6,7 @@ import server
 
 
 def main():
-    print 'Main starting',
+    print 'Main starting'
     node_id = sys.argv[1]
     node_id = node_id.lower()
 

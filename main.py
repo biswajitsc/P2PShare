@@ -7,6 +7,10 @@ import server
 
 def main():
     print 'Main starting'
+    if len(sys.argv) < 2:
+        print '[ERROR] Please provide Node ID'
+        exit(0)
+
     node_id = sys.argv[1]
     node_id = node_id.lower()
 

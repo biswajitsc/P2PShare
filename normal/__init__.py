@@ -3,7 +3,7 @@ import threading
 import jsocket
 import constants
 
-class normal_node(threading.Thread):
+class NormalNode(threading.Thread):
     node_id = None
     conn = None
     shared_folder = None
@@ -12,7 +12,7 @@ class normal_node(threading.Thread):
         threading.Thread.__init__(self)
         print 'Creating normal node'
         self.conn = jsocket.Client()
-        shared_folder = 'Data/' + str(node_id)
+        shared_folder = 'Share/' + str(self.node_id)
         print 'Shared folder', shared_folder
         self.conn.connect('localhost', constants.LOGIN_PORT)
         self.conn.send({

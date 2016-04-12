@@ -3,6 +3,7 @@ import normal
 import peer
 import sys
 import server
+import time
 
 def main():
     print 'Main starting'
@@ -22,7 +23,7 @@ def main():
             raise Exception('node_id must be an even number between\
                 8001 and 9000 inclusive.')
 
-        n_node = normal.normal_node(node_id)
+        n_node = normal.NormalNode(node_id)
         # p_node = peer.peer_node(node_id+1)
 
         n_node.daemon = True
@@ -33,7 +34,12 @@ def main():
         n_node.join()
         # p_node.join()
 
+    # Keep the main thread alive
+    while True:
+        time.sleep(1)
+
     print 'Main exiting'
+
 
 if __name__ == '__main__':
     main()

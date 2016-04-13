@@ -18,7 +18,7 @@ class Server:
         thread.start_new_thread(self.heartbeat, ())
         while True:
             conn, = self.sock.accept()
-            data = self.conn.recv(conn)
+            data = self.sock.recv(conn)
             print_msg_info(data)
 
             inc_id = int(data['node_id'])

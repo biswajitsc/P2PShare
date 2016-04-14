@@ -142,6 +142,7 @@ class NormalNode(threading.Thread):
             elif msg_type == 'YOUR_WRITE_PEERS':
                 # Get the peer list and send them its file list
                 peers = data['peers']
+                print constants.NORMAL_TAG, peers
                 file_list = []
                 for (dir_path, dir_names, file_names) in os.walk(self._shared_folder):
                     file_list.extend(file_names)

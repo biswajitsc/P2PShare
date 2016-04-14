@@ -10,6 +10,7 @@ import math
 class Server:
 	active_peers = set()
 	normal_nodes = set()
+	normal_nodes_timestamps = {}
 	active_peers_lock = threading.Lock()
 
 	def __init__(self):
@@ -20,6 +21,7 @@ class Server:
 
 	def run(self):
 		thread.start_new_thread(self.heartbeat, ())
+		thread.start_new_thread(self.clean_normal_nodes, ())
 		while True:
 			conn,dummy = self.sock.accept()
 			# print conn
@@ -45,6 +47,10 @@ class Server:
 				else:
 					conn.close()
 			elif msg_type == 'GET_PEERS_WRITE':
+				self.active_peers_lock.acquire()
+				self.normal_nodes_timestamps[inc_id] = time.time()
+				self.active_peers_lock.release()
+
 				thread.start_new_thread(
 					self.sock.send_and_close, 
 					(conn, {
@@ -74,11 +80,11 @@ class Server:
 	def get_peers_read(self):
 		self.active_peers_lock.acquire()
 		peer_list = {}
-		cnt = 0
+		peer_list['peers'] = []
 		if len(self.active_peers) > 0:
 			sample_peers = random.sample(self.active_peers, int(math.floor(len(self.active_peers)/2))+1)
 			for p in sample_peers:
-				peer_list['peer' + str(cnt)] = p
+				peer_list['peers'].append(p)
 		else:
 			print '0 sample peers'
 		self.active_peers_lock.release()
@@ -87,11 +93,11 @@ class Server:
 	def get_peers_write(self):
 		self.active_peers_lock.acquire()
 		peer_list = {}
-		cnt = 0
+		peer_list['peers'] = []
 		if len(self.active_peers) > 0:
 			sample_peers = random.sample(self.active_peers, int(math.floor(len(self.active_peers)/2))+1)
 			for p in sample_peers:
-				peer_list['peer' + str(cnt)] = p
+				peer_list['peers'].append(p)
 		else:
 			print '0 sample peers'
 		self.active_peers_lock.release()
@@ -136,8 +142,35 @@ class Server:
 					self.active_peers_lock.acquire()
 					self.active_peers.discard(peer)
 					self.active_peers_lock.release()
+			
+			if len(self.active_peers) < constants.MAX_PEERS:
+				self.active_peers_lock.acquire()
+				new_peer_length = max(0,constants.MAX_PEERS - len(self.active_peers))
+				new_peer_length = min(new_peer_length, len(self.normal_nodes - self.active_peers))
+				new_peers = random.sample(self.normal_nodes - self.active_peers, new_peer_length)
+				
+				for p in new_peers:
+					sock = jsocket.Client()
+					sock.connect('localhost', int(p))
+					sock.send({ 'type': 'YOU_ARE_PEER', 'node_id': self.node_id })
+					sock.close()
+					self.active_peers.add(int(p))
+
+				self.active_peers_lock.release()
+			
 			time.sleep(max(0,constants.INVALIDATE_TIMEOUT - (time.time() - sec_start)))
 
+	def clean_normal_nodes(self):
+		while True:
+			self.active_peers_lock.acquire()
+			new_normal = {}
+			for normal,last_access in self.normal_nodes_timestamps.items():
+				if time.time() - last_access > constants.MAX_OFFLINE_TIME:
+					new_normal[normal] = last_access
+					self.normal_nodes.discard(normal)
+			self.normal_nodes_timestamps = new_normal
+			self.active_peers_lock.release()
+			time.sleep(60)
 
 def print_msg_info(data):
 	print 'Received {} from {}.'.format(data['type'], data['node_id'])

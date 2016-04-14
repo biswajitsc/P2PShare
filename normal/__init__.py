@@ -16,7 +16,8 @@ class NormalNode(threading.Thread):
     def __init__(self, id):
         self._node_id = id
         self._is_peer = False
-        self._search_string = ''
+        self._search_string = None
+        self._search_results = []
         threading.Thread.__init__(self)
         print 'Creating normal node'
         self._conn = jsocket.Client()
@@ -43,7 +44,13 @@ class NormalNode(threading.Thread):
                 self._search_string = command[1]
             elif command[0] == 'download':
                 # Download the given file
-                pass
+                if len(command) < 2:
+                    raise ValueError('Search string not provided')
+                try:
+                    id = int(command[1])
+                    self._download_path = self._search_results[id]
+                except Exception as e:
+                    print 'Invalid id'
             elif command[0] == 'help':
                 print 'search   [filename] : Search for a file'
                 print 'download [id]       : Download a file from the search results'
@@ -52,7 +59,7 @@ class NormalNode(threading.Thread):
     
     def _listen(self):
         while True:
-            conn,dummy = self._sock.accept()
+            conn, dummy = self._sock.accept()
             data = self._sock.recv(conn)
             print "Data is : "
             print data
@@ -62,30 +69,54 @@ class NormalNode(threading.Thread):
             if msg_type == 'YOU_ARE_PEER':
                 # Its a peer, if already its a peer ignore
                 # Otherwise start a new thread for peer
-                self._is_peer = True
+                if not self._is_peer:
+                    self._is_peer = True
+                    self_peer = peer.Peer(self._node_id + 1)
+                    self_peer.daemon = True
+                    self_peer.start()
+                    self_peer.join()
             elif msg_type == 'DOWNLOAD':
                 # Some one wants to download one of its files
                 pass
-            elif msg_type == 'YOUR_PEERS_READ':
+            elif msg_type == 'YOUR_READ_PEERS':
                 # Get the peer list and send them its file list
-                pass
-            elif msg_type == 'YOUR_PEERS_WRITE':
+                if self._search_string is not None:
+                    peers = data['peers']
+                    for p in peers:
+                        self._conn.connect('localhost', p)
+                        self._conn.send({
+                                'type': 'SEARCH',
+                                'node_id': self._node_id,
+                                'query': self._search_string
+                            })
+                        self._conn.close()
+                    self._search_string = None
+            elif msg_type == 'YOUR_WRITE_PEERS':
                 # Get the peer list and send them its file list
-                pass
+                peers = data['peers']
+                file_list = []
+                for (dir_path, dir_names, file_names) in os.walk(self._shared_folder):
+                    file_list.extend(file_names)
+                for p in peers:
+                    self._conn.connect('localhost', p)
+                    self._conn.send({
+                            'type': 'SHARE_MY_FILES',
+                            'node_id': self._node_id,
+                            'shared_files': file_list
+                        })
+                    self._conn.close()
             else:
                 print 'Unidentified message type {}'.format(msg_type)
 
     def _auto_get_write_peers(self):
         time.sleep(1)
         while True:
-            file_list = []
-            for (dir_path, dir_names, file_names) in os.walk(self._shared_folder):
-                file_list.extend(file_names)
             self._conn.connect('localhost', constants.LOGIN_PORT)
             self._conn.send({
                     'type': 'GET_PEERS_WRITE',
                     'node_id': self._node_id
                 })
+            self._conn.close()
             time.sleep(120)
 
     def _get_read_peers(self):

@@ -13,7 +13,7 @@ class Peer(threading.Thread):
 	def __init__(self, id):
 		self.node_id = id
 		# threading.Thread.__init__(self)
-		super(Peer, self).__init__(self)
+		super(Peer, self).__init__()
 		print 'Creating peer node'
 		self.sock = jsocket.Server('localhost', self.node_id)
 

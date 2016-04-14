@@ -17,7 +17,8 @@ class peer_node(threading.Thread):
         self.sock = jsocket.Server('localhost', self.node_id)
 
     def run(self):
-        thread.start_new_thread(self.file_invalidator, ())
+        # thread.start_new_thread(self.file_invalidator, ())
+        thread.start_new_thread(self.garbage_collection, ())
 
         sock = jsocket.Client()
         sock.connect('localhost', constants.LOGIN_PORT)
@@ -49,7 +50,7 @@ class peer_node(threading.Thread):
         self.file_list_lock.aquire()
         curr_time = datetime.datetime.now()
         for i in range(len(file_names)):
-            self.file_list[node_id + "_" + file_names[i]] = ((node_id, file_names[i], curr_time))
+            self.file_list[(node_id, file_names[i])] = ((node_id, file_names[i], curr_time))
         self.file_list_lock.release()
         msg = {'type': 'FILES_SHARED_ACK', 'node_id' = self.node_id}
         self.sock.send_and_close(conn, msg)
@@ -57,12 +58,30 @@ class peer_node(threading.Thread):
     def delete_files(conn, node_id, file_names):
         self.file_list_lock.aquire()
         for i in range(len(file_names)):
-            if (node_id + '_' + file_names[i]) in self.file_list:
+            if ((node_id, file_names[i]) in self.file_list):
                 del self.file_list[node_id + '_' + file_names[i]]
         self.file_list_lock.release()
         msg = {'type': 'FILES_DELETED_ACK', 'node_id' = self.node_id}
         self.sock.send_and_close(conn, msg)
 
+
+    def garbage_collection():
+        prev_time = datetime.datetime.now()
+        while(True):
+            curr_time = datetime.datetime.now()
+            time_elapsed = curr_time - prev_time
+            if time_elapsed.total_seconds() < 300:
+                continue
+            prev_time = curr_time
+            self.file_list_lock.aquire()
+            delete_files = []
+            for index in self.file_list:
+                time_difference = self.file_list[index][2] - curr_time
+                if curr_time.total_seconds >= 600:
+                    delete_files.append(index)
+            for index in delete_files:
+                del self.file_list[index]
+            self.file_list_lock.release()
 
     def file_list_manager(self, data):
         for f in data.keylist():

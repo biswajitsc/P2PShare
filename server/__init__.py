@@ -131,7 +131,9 @@ class Server:
 	def heartbeat(self):
 		while True:
 			sec_start = time.time()
-			for peer in self.active_peers:
+			self.active_peers_lock.acquire()
+			dummy_peers = self.active_peers
+			for peer in dummy_peers:
 				sock = jsocket.Client()
 				try:
 					sock.connect('localhost', peer)
@@ -139,9 +141,8 @@ class Server:
 					sock.recv_and_close()
 				except Exception:
 					print 'Peer Node {} is offline.'.format(peer)
-					self.active_peers_lock.acquire()
 					self.active_peers.discard(peer)
-					self.active_peers_lock.release()
+			self.active_peers_lock.release()
 			
 			if len(self.active_peers) < constants.MAX_PEERS:
 				self.active_peers_lock.acquire()

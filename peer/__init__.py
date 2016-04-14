@@ -7,12 +7,11 @@ import datetime
 import re
 
 class Peer(threading.Thread):
-	self.node_id = None
-	self.file_list = {}
-	self.file_list_lock = threading.Lock()
 
 	def __init__(self, id):
 		self.node_id = id
+		self.file_list = {}
+		self.file_list_lock = threading.Lock()
 		# threading.Thread.__init__(self)
 		super(Peer, self).__init__(self)
 		print 'Creating peer node'
@@ -59,6 +58,7 @@ class Peer(threading.Thread):
 
 	def search_file_list(self, query, node_id):
 		query_strings = re.findall(r'\w+', s)
+		self.file_list_lock.acquire()
 		for string in query_strings:
 			continue
 

@@ -49,6 +49,7 @@ class Server:
 					self.sock.send_and_close, 
 					(conn, {
 						'type': 'YOUR_PEERS_READ',
+						'node_id': self.node_id,
 						'data': self.get_peers()
 						})
 					)
@@ -57,6 +58,7 @@ class Server:
 					self.sock.send_and_close, 
 					(conn, {
 						'type': 'YOUR_PEERS_READ',
+						'node_id': self.node_id,
 						'data': self.get_peers_read()
 						})
 					)
@@ -91,9 +93,9 @@ class Server:
 
 	def add_peer(self, node_id, conn):
 		if node_id in active_peers:
-			self.sock.send_and_close(conn, {'type': 'ALREADY_PEER'})
+			self.sock.send_and_close(conn, {'type': 'ALREADY_PEER', 'node_id': self.node_id})
 		else:
-			self.sock.send_and_close(conn, {'type': 'ACK'})
+			self.sock.send_and_close(conn, {'type': 'ACK', 'node_id': self.node_id})
 			self.active_peers_lock.acquire()
 			self.active_peers.add(node_id)
 			self.active_peers_lock.release()
@@ -120,7 +122,7 @@ class Server:
 				sock = jsocket.Client()
 				try:
 					sock.connect('localhost', peer)
-					sock.send({'type': 'ARE_YOU_ALIVE'})
+					sock.send({'type': 'ARE_YOU_ALIVE', 'node_id': self.node_id})
 					sock.recv_and_close()
 				except Exception:
 					print 'Peer Node {} is offline.'.format(peer)

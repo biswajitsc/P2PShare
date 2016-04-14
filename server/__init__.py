@@ -5,6 +5,7 @@ import time
 import threading
 import thread
 import random
+import math
 
 class Server:
 	active_peers = set()
@@ -24,12 +25,15 @@ class Server:
 			# print conn
 			data = self.sock.recv(conn)
 			print_msg_info(data)
+			conn.close()
 
 			inc_id = int(data['node_id'])
 			msg_type = data['type'].strip()
-
+			
+			conn = jsocket.Client()
+			conn.connect('localhost', inc_id)
+			
 			if msg_type == 'I_AM_ONLINE':
-				print "Entered"
 				if self.peer_eligible(inc_id):
 					thread.start_new_thread(
 						self.sock.send_and_close,
@@ -69,7 +73,7 @@ class Server:
 		self.active_peers_lock.acquire()
 		peer_list = {}
 		cnt = 0
-		sample_peers = random.sample(self.active_peers, floor(len(self.active_peers)/2)+1)
+		sample_peers = random.sample(self.active_peers, math.floor(len(self.active_peers)/2)+1)
 		for p in sample_peers:
 			peer_list['peer' + cnt] = p
 		self.active_peers_lock.release()
@@ -79,7 +83,7 @@ class Server:
 		self.active_peers_lock.acquire()
 		peer_list = {}
 		cnt = 0
-		sample_peers = random.sample(self.active_peers, floor(len(self.active_peers)/2)+1)
+		sample_peers = random.sample(self.active_peers, math.floor(len(self.active_peers)/2)+1)
 		for p in sample_peers:
 			peer_list['peer' + cnt] = p
 		self.active_peers_lock.release()

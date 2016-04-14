@@ -32,7 +32,6 @@ class NormalNode(threading.Thread):
     def run(self):
         thread.start_new_thread(self._listen, ())
         thread.start_new_thread(self._auto_get_write_peers, ())
-        thread.start_new_thread(self._get_read_peers, ())
         while True:
             print '$',
             command = raw_input().strip().split()
@@ -64,7 +63,10 @@ class NormalNode(threading.Thread):
             elif msg_type == 'DOWNLOAD':
                 # Some one wants to download one of its files
                 pass
-            elif msg_type == 'YOUR_PEERS':
+            elif msg_type == 'YOUR_PEERS_READ':
+                # Get the peer list and send them its file list
+                pass
+            elif msg_type == 'YOUR_PEERS_WRITE':
                 # Get the peer list and send them its file list
                 pass
             else:
@@ -78,7 +80,7 @@ class NormalNode(threading.Thread):
                 file_list.extend(file_names)
             self._conn.connect('localhost', constants.LOGIN_PORT)
             self._conn.send({
-                    'type': 'GET_PEERS',
+                    'type': 'GET_PEERS_WRITE',
                     'node_id': self._node_id
                 })
             time.sleep(120)

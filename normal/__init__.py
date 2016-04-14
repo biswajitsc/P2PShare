@@ -51,7 +51,7 @@ class NormalNode(threading.Thread):
 	def _listen(self):
 		while True:
 			conn,dummy = self._sock.accept()
-			data = self.sock.recv(conn)
+			data = self._sock.recv(conn)
 			
 			incoming_id = int(data['node_id'])
 			msg_type = data['type']
@@ -77,7 +77,6 @@ class NormalNode(threading.Thread):
 					'type': 'GET_PEERS',
 					'node_id': self._node_id
 				})
-			self._conn.close()
 			time.sleep(120)
 
 	def _auto_get_read_peers(self):

@@ -119,7 +119,7 @@ class Peer(threading.Thread):
 			if time_elapsed.total_seconds() < 300:
 				continue
 			prev_time = curr_time
-			self.file_list_lock.aquire()
+			self.file_list_lock.acquire()
 			delete_files = []
 			for index in self.file_list:
 				time_difference = self.file_list[index] - curr_time

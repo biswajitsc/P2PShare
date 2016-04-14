@@ -53,15 +53,15 @@ class Server:
                 self.normal_nodes_timestamps[inc_id] = time.time()
                 self.active_peers_lock.release()
                 print constants.SUPER_PEER_TAG, 'calling GET_PEERS_WRITE thread'
-                
+
                 thread.start_new_thread(
                     self.sock.send_and_close,
                     (conn, {
                         'type': 'YOUR_PEERS_WRITE',
                         'node_id': self.node_id,
                         'data': self.get_peers_write()
-                        })
-                    )
+                    })
+                )
 
             elif msg_type == 'GET_PEERS_READ':
                 thread.start_new_thread(
@@ -133,8 +133,8 @@ class Server:
         self.normal_nodes.add(node_id)
         flag = False
         if len(self.active_peers) < constants.MAX_PEERS:
-            self.active_peers.add(node_id+1)
-            print constants.SUPER_PEER_TAG,'Added node_id',node_id+1
+            self.active_peers.add(node_id + 1)
+            print constants.SUPER_PEER_TAG, 'Added node_id', node_id + 1
             flag = True
         self.active_peers_lock.release()
         return flag
@@ -151,7 +151,7 @@ class Server:
                     sock.send(
                         {'type': 'ARE_YOU_ALIVE', 'node_id': self.node_id})
                     sock.recv_and_close()
-                    print constants.SUPER_PEER_TAG, 
+                    print constants.SUPER_PEER_TAG,
                     print 'Peer Node {} is ONLINE.'.format(peer)
                 except Exception:
                     print 'Peer Node {} is OFFLINE.'.format(peer)

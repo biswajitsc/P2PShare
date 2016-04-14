@@ -56,10 +56,14 @@ class NormalNode(threading.Thread):
             msg_type = data['type']
 
             if msg_type == 'YOU_ARE_PEER':
+                # Its a peer, if already its a peer ignore
+                # Otherwise start a new thread for peer
                 self._is_peer = True
             elif msg_type == 'DOWNLOAD':
+                # Some one wants to download one of its files
                 pass
             elif msg_type == 'YOUR_PEERS':
+                # Get the peer list and send them its file list
                 pass
             else:
                 print 'Unidentified message type {}'.format(msg_type)

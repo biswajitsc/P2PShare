@@ -40,15 +40,15 @@ class Server:
 				thread.start_new_thread(
 					self.sock.send_and_close, 
 					(conn, {
-						'type': 'YOUR_PEERS_READ'
-						'data': self.get_peers_read()
+						'type': 'YOUR_PEERS_READ',
+						'data': self.get_peers()
 						})
 					)
 			if msg_type == 'GET_PEERS_READ':
 				thread.start_new_thread(
 					self.sock.send_and_close, 
 					(conn, {
-						'type': 'YOUR_PEERS_READ'
+						'type': 'YOUR_PEERS_READ',
 						'data': self.get_peers_read()
 						})
 					)

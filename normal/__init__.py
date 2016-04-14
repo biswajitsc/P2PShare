@@ -13,8 +13,6 @@ import constants
 # -> Periodically refresh file list, get peer and share
 
 
-
-
 class NormalNode(threading.Thread):
     def __init__(self, id):
         self._node_id = id
@@ -35,14 +33,14 @@ class NormalNode(threading.Thread):
 
         print constants.NORMAL_TAG, 'Shared folder', self._shared_folder
         self._sock = jsocket.Server('localhost', self._node_id)
-        
+
         self._conn.connect('localhost', constants.LOGIN_PORT)
         self._conn.send({
             'type': 'I_AM_ONLINE',
             'node_id': self._node_id
         })
         self._conn.close()
-        
+
     def run(self):
         thread.start_new_thread(self._listen, ())
         thread.start_new_thread(self._auto_get_write_peers, ())
@@ -53,7 +51,7 @@ class NormalNode(threading.Thread):
                 if len(command) < 2:
                     raise ValueError('Search string not provided')
                 self._search_string = command[1]
-            
+
             elif command[0] == 'download':
                 # Download the given file
                 if len(command) < 2:
@@ -84,11 +82,11 @@ class NormalNode(threading.Thread):
                     if not data_read:
                         break
                 self._conn.close()
-            
+
             elif command[0] == 'help':
                 print 'search   [filename] : Search for a file'
                 print 'download [id]       : Download a file from the search results'
-            
+
             else:
                 print 'Invalid command. Type help for the list of commands'
 
@@ -117,14 +115,14 @@ class NormalNode(threading.Thread):
                 print '$ Search Results'
                 for i in xrange(len(self._search_results)):
                     print i, self._search_results[i][0], self._search_results[i][1]
-            
+
             elif msg_type == 'DOWNLOAD':
                 # Some one wants to download one of its files
                 file_path = data['file_path']
                 with open(file_path, 'rb') as file_to_send:
                     for line in file_to_send:
                         conn.sendall(line)
-            
+
             elif msg_type == 'YOUR_READ_PEERS':
                 # Get the peer list and send them its file list
                 if self._search_string is not None:
@@ -138,7 +136,7 @@ class NormalNode(threading.Thread):
                         })
                         self._conn.close()
                     self._search_string = None
-            
+
             elif msg_type == 'YOUR_WRITE_PEERS':
                 # Get the peer list and send them its file list
                 peers = data['peers']
@@ -154,10 +152,10 @@ class NormalNode(threading.Thread):
                         'shared_files': file_list
                     })
                     self._conn.close()
-            
+
             else:
                 print 'Unidentified message type {}'.format(msg_type)
-            
+
             conn.close()
 
     def _auto_get_write_peers(self):

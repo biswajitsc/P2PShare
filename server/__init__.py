@@ -138,8 +138,8 @@ class Server:
         self.normal_nodes.add(node_id)
         flag = False
         if len(self.active_peers) < constants.MAX_PEERS:
-            self.active_peers.add(node_id+1)
-            print constants.SUPER_PEER_TAG,'Added node_id',node_id+1
+            self.active_peers.add(node_id + 1)
+            print constants.SUPER_PEER_TAG, 'Added node_id', node_id + 1
             flag = True
         self.active_peers_lock.release()
         return flag
@@ -157,7 +157,7 @@ class Server:
                     sock.send(
                         {'type': 'ARE_YOU_ALIVE', 'node_id': self.node_id})
                     sock.recv_and_close()
-                    print constants.SUPER_PEER_TAG, 
+                    print constants.SUPER_PEER_TAG,
                     print 'Peer Node {} is ONLINE.'.format(peer)
                 except Exception:
                     print 'Peer Node {} is OFFLINE.'.format(peer)

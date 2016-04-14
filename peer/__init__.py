@@ -8,7 +8,7 @@ import re
 
 
 class Peer(threading.Thread):
-
+	
 	def __init__(self, id):
 		self.node_id = id
 		self.file_list = {}
@@ -90,8 +90,10 @@ class Peer(threading.Thread):
 		self.file_list_lock.aquire()
 		curr_time = datetime.datetime.now()
 		for i in range(len(file_names)):
-			self.file_list[(node_id, file_names[i])] = ((node_id, file_names[i], curr_time))
+			self.file_list[(node_id, file_names[i])] = curr_time
 		self.file_list_lock.release()
+		print constants.PEER_TAG, " : Files Added from " + node_id + "!!"
+		self.print_file_table()
 		# msg = {'type': 'FILES_SHARED_ACK', 'node_id' : self.node_id}
 		# self.sock.send_and_close(conn, msg)
 		conn.close()
@@ -102,6 +104,8 @@ class Peer(threading.Thread):
 			if ((node_id, file_names[i]) in self.file_list):
 				del self.file_list[(node_id, file_names[i])]
 		self.file_list_lock.release()
+		print constants.PEER_TAG, " : Files Deleted from " + node_id + "!!"
+		self.print_file_table()
 		# msg = {'type': 'FILES_DELETED_ACK', 'node_id' : self.node_id}
 		# self.sock.send_and_close(conn, msg)
 		conn.close()
@@ -118,12 +122,22 @@ class Peer(threading.Thread):
 			self.file_list_lock.aquire()
 			delete_files = []
 			for index in self.file_list:
-				time_difference = self.file_list[index][2] - curr_time
+				time_difference = self.file_list[index] - curr_time
 				if curr_time.total_seconds >= 600:
 					delete_files.append(index)
 			for index in delete_files:
 				del self.file_list[index]
+			print constants.PEER_TAG, " : Garbage Collection Performed!!"
 			self.file_list_lock.release()
+			self.print_file_table()
+
+	def print_file_table(self):
+		print "\n+++++++++++++++++++++++++++++++++", constants.PEER_TAG, ": File Table +++++++++++++++++++++++\n"
+		self.file_list_lock.acquire()
+		for index in self.file_list:
+			print "Node Id : ", index[0], " | ", "File Name : ", index[1]
+		self.file_list_lock.release()
+
 
 	# def file_list_manager(self, data):
 	#     for f in data.keylist():
@@ -136,5 +150,5 @@ class Peer(threading.Thread):
 	#     pass
 
 def print_msg_info(data):
-	print constants.PEER_TAG,
-	print 'Recieved {} from {}.'.format(data['type'], data['node_id'])
+    print constants.PEER_TAG,
+    print 'Recieved {} from {}.'.format(data['type'], data['node_id'])

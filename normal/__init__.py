@@ -50,7 +50,7 @@ class NormalNode(threading.Thread):
 	
 	def _listen(self):
 		while True:
-			conn, = self._sock.accept()
+			conn,dummy = self._sock.accept()
 			data = self.sock.recv(conn)
 			
 			incoming_id = int(data['node_id'])

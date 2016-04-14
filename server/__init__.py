@@ -8,17 +8,20 @@ import random
 
 class Server:
 	active_peers = set()
+	normal_nodes = set()
 	active_peers_lock = threading.Lock()
 
 	def __init__(self):
 		print 'Server running'
 		self.sock = jsocket.Server('localhost', constants.LOGIN_PORT)
 		self.node_id = constants.LOGIN_PORT
+		# print self.sock
 
 	def run(self):
 		thread.start_new_thread(self.heartbeat, ())
 		while True:
-			conn, = self.sock.accept()
+			conn,dummy = self.sock.accept()
+			# print conn
 			data = self.sock.recv(conn)
 			print_msg_info(data)
 
@@ -97,6 +100,7 @@ class Server:
 
 	def peer_eligible(self, node_id):
 		self.active_peers_lock.acquire()
+		self.normal_nodes.add(node_id)
 		flag = False
 		if len(self.active_peers) < constants.MAX_PEERS:
 			self.active_peers.add(node_id)

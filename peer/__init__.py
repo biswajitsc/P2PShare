@@ -7,12 +7,11 @@ import datetime
 import re
 
 class Peer(threading.Thread):
-	node_id = None
-	file_list = {}
-	file_list_lock = threading.Lock()
 
 	def __init__(self, id):
 		self.node_id = id
+		self.file_list = {}
+		self.file_list_lock = threading.Lock()
 		# threading.Thread.__init__(self)
 		super(Peer, self).__init__()
 		print 'Creating peer node'
@@ -24,7 +23,7 @@ class Peer(threading.Thread):
 
 		sock = jsocket.Client()
 		sock.connect('localhost', constants.LOGIN_PORT)
-		sock.send({'type': 'I_AM_PEER'})
+		sock.send({'type': 'I_AM_PEER', 'node_id' : self.node_id})
 		sock.close()
 
 		while True:
@@ -36,11 +35,13 @@ class Peer(threading.Thread):
 			recv_node_id = data['node_id']
 			msg_type = data['type']
 			
+			conn = jsocket.Client()
+			conn.connect('localhost', recv_node_id)
 
 			if msg_type == 'ARE_YOU_ALIVE':
 				thread.start_new_thread(
 					self.sock.send_and_close,
-					(conn, {'type': 'I_AM_ALIVE'})
+					(conn, {'type': 'I_AM_ALIVE', 'node_id' : self.node_id})
 				)
 			elif msg_type == "SHARE_MY_FILES":
 				# Use a mutex or a lock while accessing critical section file_list of a peer.
@@ -51,12 +52,16 @@ class Peer(threading.Thread):
 				thread.start_new_thread(delete_files, (conn, recv_node_id, file_names))
 			elif msg_type == "SEARCH":
 				query_file_name = data['query']
-				thread.start_new_thread()
+				thread.start_new_thread(search_file_list, (query_file_name, recv_node_id))
 			else:
 				conn.close()
 
 	def search_file_list(self, query, node_id):
-		pass
+		query_strings = re.findall(r'\w+', s)
+		self.file_list_lock.acquire()
+		for string in query_strings:
+			continue
+
 
 	def add_files(self, conn, node_id, file_names):
 		self.file_list_lock.aquire()

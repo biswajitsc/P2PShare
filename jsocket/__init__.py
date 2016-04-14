@@ -41,7 +41,7 @@ class Server(object):
     def send_and_close(self, client, data):
         if not client:
             raise Exception('Cannot send data, no client is connected')
-        _send(client, data)
+        _send(client.socket, data)
         client.close()
         return self
 

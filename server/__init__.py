@@ -47,10 +47,12 @@ class Server:
                 else:
                     conn.close()
             elif msg_type == 'GET_PEERS_WRITE':
+                print constants.SUPER_PEER_TAG, 'entered GET_PEERS_WRITE'
                 self.active_peers_lock.acquire()
                 self.normal_nodes_timestamps[inc_id] = time.time()
                 self.active_peers_lock.release()
-
+                print constants.SUPER_PEER_TAG, 'calling GET_PEERS_WRITE thread'
+                
                 thread.start_new_thread(
                     self.sock.send_and_close, 
                     (conn, {
@@ -59,6 +61,7 @@ class Server:
                         'data': self.get_peers_write()
                         })
                     )
+
             elif msg_type == 'GET_PEERS_READ':
                 thread.start_new_thread(
                     self.sock.send_and_close, 
@@ -91,6 +94,8 @@ class Server:
         return peer_list
     
     def get_peers_write(self):
+        print constants.SUPER_PEER_TAG, 'inside get_peers_write function'
+        print constants.SUPER_PEER_TAG, self.active_peers
         self.active_peers_lock.acquire()
         peer_list = {}
         peer_list['peers'] = []
@@ -101,6 +106,7 @@ class Server:
         else:
             print '0 sample peers'
         self.active_peers_lock.release()
+        print constants.SUPER_PEER_TAG, 'peer_list', peer_list
         return peer_list
 
     def add_peer(self, node_id, conn):
@@ -122,8 +128,8 @@ class Server:
         self.normal_nodes.add(node_id)
         flag = False
         if len(self.active_peers) < constants.MAX_PEERS:
-            self.active_peers.add(node_id)
-            print 'Added node_id',node_id
+            self.active_peers.add(node_id+1)
+            print constants.SUPER_PEER_TAG,'Added node_id',node_id+1
             flag = True
         self.active_peers_lock.release()
         return flag
@@ -139,8 +145,10 @@ class Server:
                     sock.connect('localhost', peer)
                     sock.send({'type': 'ARE_YOU_ALIVE', 'node_id': self.node_id})
                     sock.recv_and_close()
+                    print constants.SUPER_PEER_TAG, 
+                    print 'Peer Node {} is ONLINE.'.format(peer)
                 except Exception:
-                    print 'Peer Node {} is offline.'.format(peer)
+                    print 'Peer Node {} is OFFLINE.'.format(peer)
                     self.active_peers.discard(peer)
             self.active_peers_lock.release()
             
@@ -174,4 +182,5 @@ class Server:
             time.sleep(60)
 
 def print_msg_info(data):
+    print constants.SUPER_PEER_TAG,
     print 'Received {} from {}.'.format(data['type'], data['node_id'])

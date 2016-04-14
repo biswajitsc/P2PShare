@@ -14,7 +14,7 @@ class Peer(threading.Thread):
 		self.file_list_lock = threading.Lock()
 		# threading.Thread.__init__(self)
 		super(Peer, self).__init__()
-		print 'Creating peer node'
+		print constants.PEER_TAG, 'Creating peer node'
 		self.sock = jsocket.Server('localhost', self.node_id)
 
 	def run(self):
@@ -35,6 +35,9 @@ class Peer(threading.Thread):
 			recv_node_id = data['node_id']
 			msg_type = data['type']
 			
+			print constants.PEER_TAG, 'Data is: ',
+			print data
+
 			conn = jsocket.Client()
 			conn.connect('localhost', recv_node_id)
 
@@ -43,16 +46,20 @@ class Peer(threading.Thread):
 					self.sock.send_and_close,
 					(conn, {'type': 'I_AM_ALIVE', 'node_id' : self.node_id})
 				)
+			
 			elif msg_type == "SHARE_MY_FILES":
 				# Use a mutex or a lock while accessing critical section file_list of a peer.
 				file_names = data['shared_files']
 				thread.start_new_thread(add_files, (conn, recv_node_id, file_names))
+			
 			elif msg_type == "DELETE_MY_FILES":
 				file_names = data['Deleted_files']
 				thread.start_new_thread(delete_files, (conn, recv_node_id, file_names))
+			
 			elif msg_type == "SEARCH":
 				query_file_name = data['query']
 				thread.start_new_thread(search_file_list, (conn, query_file_name, recv_node_id))
+			
 			else:
 				conn.close()
 
@@ -128,4 +135,5 @@ class Peer(threading.Thread):
 	#     pass
 
 def print_msg_info(data):
+	print constants.PEER_TAG,
 	print 'Recieved {} from {}.'.format(data['type'], data['node_id'])

@@ -8,7 +8,7 @@ import re
 
 
 class Peer(threading.Thread):
-
+	
 	def __init__(self, id):
 		self.node_id = id
 		self.file_list = {}
@@ -150,5 +150,5 @@ class Peer(threading.Thread):
 	#     pass
 
 def print_msg_info(data):
-	print constants.PEER_TAG,
-	print 'Recieved {} from {}.'.format(data['type'], data['node_id'])
+    print constants.PEER_TAG,
+    print 'Recieved {} from {}.'.format(data['type'], data['node_id'])

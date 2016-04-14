@@ -5,7 +5,7 @@ import thread
 import constants
 import datetime
 
-class peer_node(threading.Thread):
+class Peer(threading.Thread):
 	node_id = None
 	file_list = {}
 	file_list_lock = threading.Lock()

@@ -26,9 +26,10 @@ class Server:
 			print_msg_info(data)
 
 			inc_id = int(data['node_id'])
-			msg_type = data['type']
+			msg_type = data['type'].strip()
 
 			if msg_type == 'I_AM_ONLINE':
+				print "Entered"
 				if self.peer_eligible(inc_id):
 					thread.start_new_thread(
 						self.sock.send_and_close,
@@ -39,7 +40,7 @@ class Server:
 					)
 				else:
 					conn.close()
-			if msg_type == 'GET_PEERS':
+			elif msg_type == 'GET_PEERS':
 				thread.start_new_thread(
 					self.sock.send_and_close, 
 					(conn, {
@@ -47,7 +48,7 @@ class Server:
 						'data': self.get_peers()
 						})
 					)
-			if msg_type == 'GET_PEERS_READ':
+			elif msg_type == 'GET_PEERS_READ':
 				thread.start_new_thread(
 					self.sock.send_and_close, 
 					(conn, {
@@ -55,10 +56,10 @@ class Server:
 						'data': self.get_peers_read()
 						})
 					)
-			if msg_type == 'PEER_OFFLINE':
+			elif msg_type == 'PEER_OFFLINE':
 				thread.start_new_thread(self.peer_offline, (data['peer_id'],))
 				conn.close()
-			if msg_type == 'I_AM_PEER':
+			elif msg_type == 'I_AM_PEER':
 				thread.start_new_thread(self.add_peer, (inc_id, conn))
 			else:
 				print 'Unidentified message type {}'.format(msg_type)
@@ -126,4 +127,4 @@ class Server:
 
 
 def print_msg_info(data):
-	print 'Recieved {} from {}.'.format(data['type'], data['node_id'])
+	print 'Received {} from {}.'.format(data['type'], data['node_id'])

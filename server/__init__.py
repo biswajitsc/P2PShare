@@ -8,13 +8,13 @@ import random
 import math
 
 class Server:
-	active_peers = set()
-	normal_nodes = set()
-	normal_nodes_timestamps = {}
-	active_peers_lock = threading.Lock()
-
+	
 	def __init__(self):
 		print 'Server running'
+		self.active_peers = set()
+		self.normal_nodes = set()
+		self.normal_nodes_timestamps = {}
+		self.active_peers_lock = threading.Lock()
 		self.sock = jsocket.Server('localhost', constants.LOGIN_PORT)
 		self.node_id = constants.LOGIN_PORT
 		# print self.sock
@@ -104,7 +104,7 @@ class Server:
 		return peer_list
 
 	def add_peer(self, node_id, conn):
-		if node_id in active_peers:
+		if node_id in self.active_peers:
 			self.sock.send_and_close(conn, {'type': 'ALREADY_PEER', 'node_id': self.node_id})
 		else:
 			self.sock.send_and_close(conn, {'type': 'ACK', 'node_id': self.node_id})
@@ -131,7 +131,9 @@ class Server:
 	def heartbeat(self):
 		while True:
 			sec_start = time.time()
-			for peer in self.active_peers:
+			self.active_peers_lock.acquire()
+			dummy_peers = self.active_peers
+			for peer in dummy_peers:
 				sock = jsocket.Client()
 				try:
 					sock.connect('localhost', peer)
@@ -139,9 +141,8 @@ class Server:
 					sock.recv_and_close()
 				except Exception:
 					print 'Peer Node {} is offline.'.format(peer)
-					self.active_peers_lock.acquire()
 					self.active_peers.discard(peer)
-					self.active_peers_lock.release()
+			self.active_peers_lock.release()
 			
 			if len(self.active_peers) < constants.MAX_PEERS:
 				self.active_peers_lock.acquire()

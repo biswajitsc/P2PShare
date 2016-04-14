@@ -23,7 +23,15 @@ class NormalNode(threading.Thread):
         threading.Thread.__init__(self)
         print NORMAL_TAG, 'Creating normal node'
         self._conn = jsocket.Client()
-        self._shared_folder = 'Share/' + str(self._node_id)
+        
+        self._shared_folder = os.path.join('Share' + str(self._node_id))
+        self._make_sure_exits('Share')
+        self._make_sure_exits(self._shared_folder)
+        
+        self._download_folder = os.path.join('Download' + str(self._node_id))
+        self._make_sure_exits('Download')
+        self._make_sure_exits(self._shared_folder)
+
         print NORMAL_TAG, 'Shared folder', self._shared_folder
         self._conn.connect('localhost', constants.LOGIN_PORT)
         self._conn.send({
@@ -48,11 +56,32 @@ class NormalNode(threading.Thread):
                 # Download the given file
                 if len(command) < 2:
                     raise ValueError('Search string not provided')
+                result = None
                 try:
-                    id = int(command[1])
-                    self._download_path = self._search_results[id]
+                    result = self._search_results[int(command[1])]
                 except Exception as e:
                     print 'Invalid id'
+                self._conn.connect('localhost', result[1])
+                self._conn.send({
+                        'type': 'DOWNLOAD',
+                        'node_id': self._node_id,
+                        'file_path': result[0]
+                    })
+                print 'Enter file name'
+                file_name = raw_input().strip()
+                print NORMAL_TAG, 'Downloading from', result[1], 'to', file_name
+                with open(os.path.join(self._shared_folder, file_name), 'wb') as file_to_write:
+                    while True:
+                        data_read = self._conn.recv(BUFFER_SIZE)
+                        if not data_read:
+                            break
+                        file_to_write.write(data_read)
+                    file_to_write.close()
+                while True:
+                    data_read = conn.recv(BUFFER_SIZE)
+                    if not data_read:
+                        break
+                self._conn.close()
             elif command[0] == 'help':
                 print 'search   [filename] : Search for a file'
                 print 'download [id]       : Download a file from the search results'
@@ -79,7 +108,7 @@ class NormalNode(threading.Thread):
                     self_peer.join()
             elif msg_type == 'SEARCH_RESULT':
                 # Save the result, and print it
-                self._search_results = data['result']
+                self._search_results = data['file_list']
                 print '$ Search Results'
                 for i in xrange(len(self._search_results)):
                     print i, self._search_results[i][0], self._search_results[i][1]
@@ -139,5 +168,12 @@ class NormalNode(threading.Thread):
             })
         self._conn.close()
 
-    def _print_msg_info(data):
+    def _print_msg_info(self, data):
         print 'Recieved {} from {}.'.format(data['type'], data['node_id'])
+
+    def _make_sure_exits(self, folder):
+        try:
+            os.makedirs(folder)
+        except OSError:
+            if not os.path.isdir(folder):
+                raise

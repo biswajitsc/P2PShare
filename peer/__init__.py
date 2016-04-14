@@ -27,7 +27,7 @@ class Peer(threading.Thread):
 		sock.close()
 
 		while True:
-			conn = self.sock.accept()
+			conn, dummy = self.sock.accept()
 			data = self.sock.recv(conn)
 			print_msg_info(data)
 			conn.close()
@@ -59,8 +59,17 @@ class Peer(threading.Thread):
 	def search_file_list(self, query, node_id):
 		query_strings = re.findall(r'\w+', s)
 		self.file_list_lock.acquire()
-		for string in query_strings:
-			continue
+		ranked_list = {}
+		for name in self.file_list:
+			strngs = re.findall(r'\w+', s)
+			count = 0
+			for string in query_strings:
+				for strng in strngs:
+					if strng in string:
+						count += 1
+						break
+				continue
+		self.file_list_lock.release()
 
 
 	def add_files(self, conn, node_id, file_names):

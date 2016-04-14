@@ -16,6 +16,7 @@ class NormalNode(threading.Thread):
     def __init__(self, id):
         self._node_id = id
         self._is_peer = False
+        self._search_string = ''
         threading.Thread.__init__(self)
         print 'Creating normal node'
         self._conn = jsocket.Client()
@@ -32,13 +33,14 @@ class NormalNode(threading.Thread):
     def run(self):
         thread.start_new_thread(self._listen, ())
         thread.start_new_thread(self._auto_get_write_peers, ())
-        thread.start_new_thread(self._get_read_peers, ())
         while True:
             print '$',
             command = raw_input().strip().split()
             if command[0] == 'search':
                 # Send file to peers, wait for response
-                pass
+                if len(command) < 2:
+                    raise ValueError('Search string not provided')
+                self._search_string = command[1]
             elif command[0] == 'download':
                 # Download the given file
                 pass

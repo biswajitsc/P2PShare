@@ -4,6 +4,7 @@ import jsocket
 import thread
 import constants
 import datetime
+import re
 
 class Peer(threading.Thread):
 	node_id = None
@@ -30,8 +31,12 @@ class Peer(threading.Thread):
 			conn = self.sock.accept()
 			data = self.sock.recv(conn)
 			print_msg_info(data)
+			conn.close()
+
 			recv_node_id = data['node_id']
 			msg_type = data['type']
+			
+
 			if msg_type == 'ARE_YOU_ALIVE':
 				thread.start_new_thread(
 					self.sock.send_and_close,
@@ -44,29 +49,35 @@ class Peer(threading.Thread):
 			elif msg_type == "DELETE_MY_FILES":
 				file_names = data['Deleted_files']
 				thread.start_new_thread(delete_files, (conn, recv_node_id, file_names))
+			elif msg_type == "SEARCH":
+				query_file_name = data['query']
+				thread.start_new_thread()
 			else:
 				conn.close()
 
-	def add_files(conn, node_id, file_names):
+	def search_file_list(self, query, node_id):
+		pass
+
+	def add_files(self, conn, node_id, file_names):
 		self.file_list_lock.aquire()
 		curr_time = datetime.datetime.now()
 		for i in range(len(file_names)):
 			self.file_list[(node_id, file_names[i])] = ((node_id, file_names[i], curr_time))
 		self.file_list_lock.release()
-		msg = {'type': 'FILES_SHARED_ACK', 'node_id' : self.node_id}
-		self.sock.send_and_close(conn, msg)
+		# msg = {'type': 'FILES_SHARED_ACK', 'node_id' : self.node_id}
+		# self.sock.send_and_close(conn, msg)
 
-	def delete_files(conn, node_id, file_names):
+	def delete_files(self, conn, node_id, file_names):
 		self.file_list_lock.aquire()
 		for i in range(len(file_names)):
 			if ((node_id, file_names[i]) in self.file_list):
-				del self.file_list[node_id + '_' + file_names[i]]
+				del self.file_list[(node_id, file_names[i])]
 		self.file_list_lock.release()
-		msg = {'type': 'FILES_DELETED_ACK', 'node_id' : self.node_id}
-		self.sock.send_and_close(conn, msg)
+		# msg = {'type': 'FILES_DELETED_ACK', 'node_id' : self.node_id}
+		# self.sock.send_and_close(conn, msg)
 
 
-	def garbage_collection():
+	def garbage_collection(self):
 		prev_time = datetime.datetime.now()
 		while(True):
 			curr_time = datetime.datetime.now()

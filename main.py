@@ -17,6 +17,9 @@ def main():
     if node_id == 'server':
         server_obj = server.Server()
         server_obj.run()
+    # elif node_id == 'peer':
+    #     peer_obj = peer.Peer()
+    #     peer_obj.run()
     else:
         node_id = int(node_id)
         if node_id <= 8000 or node_id > 9000 or node_id % 2 == 1:

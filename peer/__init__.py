@@ -7,9 +7,9 @@ import datetime
 import re
 
 class Peer(threading.Thread):
-	node_id = None
-	file_list = {}
-	file_list_lock = threading.Lock()
+	self.node_id = None
+	self.file_list = {}
+	self.file_list_lock = threading.Lock()
 
 	def __init__(self, id):
 		self.node_id = id

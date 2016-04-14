@@ -52,24 +52,30 @@ class Peer(threading.Thread):
 				thread.start_new_thread(delete_files, (conn, recv_node_id, file_names))
 			elif msg_type == "SEARCH":
 				query_file_name = data['query']
-				thread.start_new_thread(search_file_list, (query_file_name, recv_node_id))
+				thread.start_new_thread(search_file_list, (conn, query_file_name, recv_node_id))
 			else:
 				conn.close()
 
-	def search_file_list(self, query, node_id):
-		query_strings = re.findall(r'\w+', s)
+	def search_file_list(self, conn, query, node_id):
+		query_strings = re.findall(r'\w+', query)
 		self.file_list_lock.acquire()
 		ranked_list = {}
 		for name in self.file_list:
-			strngs = re.findall(r'\w+', s)
+			strngs = re.findall(r'\w+', name[1])
 			count = 0
 			for string in query_strings:
 				for strng in strngs:
-					if strng in string:
+					if (string in strng) or (strng in string):
 						count += 1
 						break
-				continue
+			ranked_list[name] = (count * 1.0) / len(query_strings)				
 		self.file_list_lock.release()
+		sorted_tags = sorted(ranked_list.items(), key=operator.itemgetter(1), reverse=True)
+		sorted_file_list = []
+		for i in range(len(sorted_tags)):
+			sorted_file_list.append(sorted_tags[i][0])
+		msg = {'type' : "SEARCH_RESULT", 'file_list' : sorted_file_list}
+		self.sock.send_and_close(conn, msg)
 
 
 	def add_files(self, conn, node_id, file_names):

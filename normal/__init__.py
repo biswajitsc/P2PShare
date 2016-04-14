@@ -31,7 +31,8 @@ class NormalNode(threading.Thread):
 
     def run(self):
         thread.start_new_thread(self._listen, ())
-        thread.start_new_thread(self._auto_get_peers, ())
+        thread.start_new_thread(self._auto_get_write_peers, ())
+        thread.start_new_thread(self._get_read_peers, ())
         while True:
             print '$',
             command = raw_input().strip().split()
@@ -57,17 +58,20 @@ class NormalNode(threading.Thread):
             msg_type = data['type']
 
             if msg_type == 'YOU_ARE_PEER':
+                # Its a peer, if already its a peer ignore
+                # Otherwise start a new thread for peer
                 self._is_peer = True
             elif msg_type == 'DOWNLOAD':
+                # Some one wants to download one of its files
                 pass
             elif msg_type == 'YOUR_PEERS':
-                pass
-            elif msg_type == 'YOUR_PEERS_READ':
+                # Get the peer list and send them its file list
                 pass
             else:
                 print 'Unidentified message type {}'.format(msg_type)
 
-    def _auto_get_peers(self):
+    def _auto_get_write_peers(self):
+        time.sleep(1)
         while True:
             file_list = []
             for (dir_path, dir_names, file_names) in os.walk(self._shared_folder):
@@ -79,13 +83,13 @@ class NormalNode(threading.Thread):
                 })
             time.sleep(120)
 
-    def _auto_get_read_peers(self):
+    def _get_read_peers(self):
         self._conn.connect('localhost', constants.LOGIN_PORT)
         self._conn.send({
                 'type': 'GET_PEERS_READ',
                 'node_id': self._node_id
             })
         self._conn.close()
-            
+
     def _print_msg_info(data):
         print 'Recieved {} from {}.'.format(data['type'], data['node_id'])

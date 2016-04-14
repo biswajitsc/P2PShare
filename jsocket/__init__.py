@@ -17,7 +17,7 @@ class Server(object):
       server.send({'status': 'ok'})
     """
 
-    backlog = 100
+    backlog = 1000
 
     def __init__(self, host, port):
         self.socket = socket.socket()

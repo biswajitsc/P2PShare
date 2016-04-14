@@ -44,13 +44,13 @@ class Server:
 					)
 				else:
 					conn.close()
-			elif msg_type == 'GET_PEERS':
+			elif msg_type == 'GET_PEERS_WRITE':
 				thread.start_new_thread(
 					self.sock.send_and_close, 
 					(conn, {
-						'type': 'YOUR_PEERS_READ',
+						'type': 'YOUR_PEERS_WRITE',
 						'node_id': self.node_id,
-						'data': self.get_peers()
+						'data': self.get_peers_write()
 						})
 					)
 			elif msg_type == 'GET_PEERS_READ':
@@ -75,19 +75,25 @@ class Server:
 		self.active_peers_lock.acquire()
 		peer_list = {}
 		cnt = 0
-		sample_peers = random.sample(self.active_peers, math.floor(len(self.active_peers)/2)+1)
-		for p in sample_peers:
-			peer_list['peer' + cnt] = p
+		if len(self.active_peers) > 0:
+			sample_peers = random.sample(self.active_peers, int(math.floor(len(self.active_peers)/2))+1)
+			for p in sample_peers:
+				peer_list['peer' + str(cnt)] = p
+		else:
+			print '0 sample peers'
 		self.active_peers_lock.release()
 		return peer_list
 	
-	def get_peers(self):
+	def get_peers_write(self):
 		self.active_peers_lock.acquire()
 		peer_list = {}
 		cnt = 0
-		sample_peers = random.sample(self.active_peers, math.floor(len(self.active_peers)/2)+1)
-		for p in sample_peers:
-			peer_list['peer' + cnt] = p
+		if len(self.active_peers) > 0:
+			sample_peers = random.sample(self.active_peers, int(math.floor(len(self.active_peers)/2))+1)
+			for p in sample_peers:
+				peer_list['peer' + str(cnt)] = p
+		else:
+			print '0 sample peers'
 		self.active_peers_lock.release()
 		return peer_list
 
@@ -111,6 +117,7 @@ class Server:
 		flag = False
 		if len(self.active_peers) < constants.MAX_PEERS:
 			self.active_peers.add(node_id)
+			print 'Added node_id',node_id
 			flag = True
 		self.active_peers_lock.release()
 		return flag

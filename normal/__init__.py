@@ -32,7 +32,6 @@ class NormalNode(threading.Thread):
     def run(self):
         thread.start_new_thread(self._listen, ())
         thread.start_new_thread(self._auto_get_peers, ())
-        thread.start_new_thread(self._auto_get_read_peers, ())
         while True:
             print '$',
             command = raw_input().strip().split()
@@ -81,14 +80,12 @@ class NormalNode(threading.Thread):
             time.sleep(120)
 
     def _auto_get_read_peers(self):
-        while True:
-            self._conn.connect('localhost', constants.LOGIN_PORT)
-            self._conn.send({
-                    'type': 'GET_PEERS_READ',
-                    'node_id': self._node_id
-                })
-            self._conn.close()
-            time.sleep(120)
-
+        self._conn.connect('localhost', constants.LOGIN_PORT)
+        self._conn.send({
+                'type': 'GET_PEERS_READ',
+                'node_id': self._node_id
+            })
+        self._conn.close()
+            
     def _print_msg_info(data):
         print 'Recieved {} from {}.'.format(data['type'], data['node_id'])

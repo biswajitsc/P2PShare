@@ -14,6 +14,7 @@ import constants
 
 NORMAL_TAG = '[Normal]'
 
+
 class NormalNode(threading.Thread):
     def __init__(self, id):
         self._node_id = id
@@ -23,11 +24,11 @@ class NormalNode(threading.Thread):
         threading.Thread.__init__(self)
         print NORMAL_TAG, 'Creating normal node'
         self._conn = jsocket.Client()
-        
+
         self._shared_folder = os.path.join('Share' + str(self._node_id))
         self._make_sure_exits('Share')
         self._make_sure_exits(self._shared_folder)
-        
+
         self._download_folder = os.path.join('Download' + str(self._node_id))
         self._make_sure_exits('Download')
         self._make_sure_exits(self._shared_folder)
@@ -35,9 +36,9 @@ class NormalNode(threading.Thread):
         print NORMAL_TAG, 'Shared folder', self._shared_folder
         self._conn.connect('localhost', constants.LOGIN_PORT)
         self._conn.send({
-                'type': 'I_AM_ONLINE',
-                'node_id': self._node_id
-            })
+            'type': 'I_AM_ONLINE',
+            'node_id': self._node_id
+        })
         self._conn.close()
         self._sock = jsocket.Server('localhost', self._node_id)
 
@@ -63,10 +64,10 @@ class NormalNode(threading.Thread):
                     print 'Invalid id'
                 self._conn.connect('localhost', result[1])
                 self._conn.send({
-                        'type': 'DOWNLOAD',
-                        'node_id': self._node_id,
-                        'file_path': result[0]
-                    })
+                    'type': 'DOWNLOAD',
+                    'node_id': self._node_id,
+                    'file_path': result[0]
+                })
                 print 'Enter file name'
                 file_name = raw_input().strip()
                 print NORMAL_TAG, 'Downloading from', result[1], 'to', file_name
@@ -87,7 +88,7 @@ class NormalNode(threading.Thread):
                 print 'download [id]       : Download a file from the search results'
             else:
                 print 'Invalid command. Type help for the list of commands'
-    
+
     def _listen(self):
         while True:
             conn, dummy = self._sock.accept()
@@ -125,10 +126,10 @@ class NormalNode(threading.Thread):
                     for p in peers:
                         self._conn.connect('localhost', p)
                         self._conn.send({
-                                'type': 'SEARCH',
-                                'node_id': self._node_id,
-                                'query': self._search_string
-                            })
+                            'type': 'SEARCH',
+                            'node_id': self._node_id,
+                            'query': self._search_string
+                        })
                         self._conn.close()
                     self._search_string = None
             elif msg_type == 'YOUR_WRITE_PEERS':
@@ -140,10 +141,10 @@ class NormalNode(threading.Thread):
                 for p in peers:
                     self._conn.connect('localhost', p)
                     self._conn.send({
-                            'type': 'SHARE_MY_FILES',
-                            'node_id': self._node_id,
-                            'shared_files': file_list
-                        })
+                        'type': 'SHARE_MY_FILES',
+                        'node_id': self._node_id,
+                        'shared_files': file_list
+                    })
                     self._conn.close()
             else:
                 print 'Unidentified message type {}'.format(msg_type)
@@ -154,18 +155,18 @@ class NormalNode(threading.Thread):
         while True:
             self._conn.connect('localhost', constants.LOGIN_PORT)
             self._conn.send({
-                    'type': 'GET_PEERS_WRITE',
-                    'node_id': self._node_id
-                })
+                'type': 'GET_PEERS_WRITE',
+                'node_id': self._node_id
+            })
             self._conn.close()
             time.sleep(120)
 
     def _get_read_peers(self):
         self._conn.connect('localhost', constants.LOGIN_PORT)
         self._conn.send({
-                'type': 'GET_PEERS_READ',
-                'node_id': self._node_id
-            })
+            'type': 'GET_PEERS_READ',
+            'node_id': self._node_id
+        })
         self._conn.close()
 
     def _print_msg_info(self, data):

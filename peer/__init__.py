@@ -86,6 +86,7 @@ class Peer(threading.Thread):
 		self.file_list_lock.release()
 		# msg = {'type': 'FILES_SHARED_ACK', 'node_id' : self.node_id}
 		# self.sock.send_and_close(conn, msg)
+		conn.close()
 
 	def delete_files(self, conn, node_id, file_names):
 		self.file_list_lock.aquire()
@@ -95,6 +96,7 @@ class Peer(threading.Thread):
 		self.file_list_lock.release()
 		# msg = {'type': 'FILES_DELETED_ACK', 'node_id' : self.node_id}
 		# self.sock.send_and_close(conn, msg)
+		conn.close()
 
 
 	def garbage_collection(self):

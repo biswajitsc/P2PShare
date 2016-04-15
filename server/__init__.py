@@ -108,24 +108,19 @@ class Server:
         else:
             print '0 sample peers'
         self.active_peers_lock.release()
-        conn.send(
-            {'type': 'YOUR_WRITE_PEERS', 'node_id': self.node_id, 'peers': peer_list})
+        conn.send({
+            'type': 'YOUR_WRITE_PEERS',
+            'node_id': self.node_id,
+            'peers': peer_list
+        })
         conn.close()
         print constants.SUPER_PEER_TAG, 'exiting get_peers_write function'
 
     def add_peer(self, inc_id):
-        conn = jsocket.Client()
-        conn.connect('localhost', inc_id)
-
-        if node_id in self.active_peers:
-            conn.send({'type': 'ALREADY_PEER', 'node_id': self.node_id})
-            conn.close()
-        else:
-            conn.send({'type': 'ACK', 'node_id': self.node_id})
-            conn.close()
+        if inc_id not in self.active_peers:
             self.active_peers_lock.acquire()
-            self.active_peers.add(node_id)
-            self.active_peers_timestamps[node_id] = time.time()
+            self.active_peers.add(inc_id)
+            self.active_peers_timestamps[inc_id] = time.time()
             self.active_peers_lock.release()
 
     def add_normal_node(self, node_id):

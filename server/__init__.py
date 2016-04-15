@@ -182,14 +182,17 @@ class Server:
             print constants.SUPER_PEER_TAG, 'Selecting Peers'
             self.active_peers_lock.acquire()
             self.normal_node_lock.acquire()
-            
+
             if len(self.active_peers) < constants.MAX_PEERS:
-                new_peer_length = max(0, constants.MAX_PEERS - len(self.active_peers))
+                new_peer_length = max(
+                    0, constants.MAX_PEERS - len(self.active_peers))
                 print constants.SUPER_PEER_TAG, new_peer_length
                 print constants.SUPER_PEER_TAG, self.normal_nodes
-                print constants.SUPER_PEER_TAG,self.active_peers
-                new_peer_length = min(new_peer_length, len(self.normal_nodes - self.active_peers))
-                new_peers = random.sample(self.normal_nodes - self.active_peers, new_peer_length)
+                print constants.SUPER_PEER_TAG, self.active_peers
+                new_peer_length = min(
+                    new_peer_length, len(self.normal_nodes - self.active_peers))
+                new_peers = random.sample(
+                    self.normal_nodes - self.active_peers, new_peer_length)
                 print constants.SUPER_PEER_TAG, new_peer_length
                 for p in new_peers:
                     conn = jsocket.Client()
@@ -201,8 +204,8 @@ class Server:
             print constants.SUPER_PEER_TAG, self.active_peers
             print constants.SUPER_PEER_TAG, 'Selecting Peers Done'
             self.normal_node_lock.release()
-            self.active_peers_lock.release()    
-            
+            self.active_peers_lock.release()
+
             time.sleep(20)
 
 

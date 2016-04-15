@@ -59,13 +59,14 @@ class Peer(threading.Thread):
 
             elif msg_type == "SEARCH":
                 query_file_name = data['query']
+                search_id = data['search_id']
                 thread.start_new_thread(
-                    self.search_file_list, (conn, query_file_name, recv_node_id))
+                    self.search_file_list, (conn, query_file_name, recv_node_id, search_id))
 
             else:
                 conn.close()
 
-    def search_file_list(self, conn, query, node_id):
+    def search_file_list(self, conn, query, node_id, search_id):
         query_strings = re.findall(r'\w+', query)
         self.file_list_lock.acquire()
         ranked_list = {}
@@ -86,7 +87,7 @@ class Peer(threading.Thread):
         sorted_file_list = []
         for i in range(len(sorted_tags)):
             sorted_file_list.append((sorted_tags[i][0][0], sorted_tags[i][0][1], sorted_tags[i][1]))
-        msg = {'type': "SEARCH_RESULT", 'node_id': self.node_id, 'file_list': sorted_file_list[:10]}
+        msg = {'type': "SEARCH_RESULT", 'node_id': self.node_id, 'file_list': sorted_file_list[:10], 'search_id' : search_id}
         conn.send(msg)
         conn.close()
 

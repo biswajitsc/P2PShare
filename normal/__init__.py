@@ -137,7 +137,6 @@ class NormalNode(threading.Thread):
             else:
                 print 'Unidentified message type {}'.format(msg_type)
 
-            
     def _auto_get_write_peers(self):
         # time.sleep(1)
         conn = jsocket.Client()

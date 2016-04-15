@@ -10,7 +10,7 @@ import math
 
 class Server:
 
-    def __init__(self):
+    def __init__(self, node_id, other_id):
         self.active_peers = set()
         self.active_peers_timestamps = {}
         self.active_peers_lock = threading.Lock()
@@ -19,8 +19,9 @@ class Server:
         self.normal_nodes_timestamps = {}
         self.normal_node_lock = threading.Lock()
 
-        self.sock = jsocket.Server('localhost', constants.LOGIN_PORT)
-        self.node_id = constants.LOGIN_PORT
+        self.sock = jsocket.Server('localhost', node_id)
+        self.node_id = node_id
+        self.other_id = other_id
 
     def run(self):
         print 'Server running'
@@ -64,9 +65,35 @@ class Server:
             elif msg_type == 'I_AM_ALIVE':
                 thread.start_new_thread(self.update_peer, (inc_id,))
 
+            elif msg_type == 'APT':
+                thread.start_new_thread(
+                    self.sync_thread, (data['data'], 'APT'))
+
+            elif msg_type == 'NNT':
+                thread.start_new_thread(
+                    self.sync_thread, (data['data'], 'NNT'))
+
             else:
                 print 'Unidentified message type {}'.format(msg_type)
                 # conn.close()
+
+    def sync_listener_thread(self, data, mode):
+        if mode == 'AP':
+            self.active_peers_lock.acquire()
+            self.active_peers = set(data)
+            self.active_peers_lock.release()
+        if mode == 'APT':
+            self.active_peers_lock.acquire()
+            self.active_peers_timestamps = set(data)
+            self.active_peers_lock.release()
+        if mode == 'NN':
+            self.normal_nodes_lock.acquire()
+            self.normal_nodes = set(data)
+            self.normal_nodes_lock.release()
+        if mode == 'NNT':
+            self.normal_nodes_lock.acquire()
+            self.normal_nodes_timestamps = set(data)
+            self.normal_nodes_lock.release()
 
     def get_peers_read(self):
         conn = jsocket.Client()
@@ -159,12 +186,24 @@ class Server:
                         continue
                 else:
                     new_peer[peer_i] = last_access
+                    self.active_peers.add(peer_i)
 
             self.active_peers_timestamps = new_peer
             print constants.SUPER_PEER_TAG, 'Cleaning peer nodes done'
             print constants.SUPER_PEER_TAG, self.active_peers
+
+            try:
+                conn = jsocket.Client()
+                conn.connect('localhost', self.other_id)
+                conn.send({
+                    'type': 'APT',
+                    'data': new_peer
+                })
+                conn.close()
+            except:
+                print constants.SUPER_PEER_TAG, 'Other node seems down'
+
             self.active_peers_lock.release()
-            
             time.sleep(constants.HEARTBEAT_TIMEOUT())
 
     def normal_heartbeat(self):
@@ -183,12 +222,24 @@ class Server:
                         continue
                 else:
                     new_normal[normal] = last_access
+                    normal_nodes.add(normal)
 
             self.normal_nodes_timestamps = new_normal
             print constants.SUPER_PEER_TAG, 'Cleaning normal nodes done'
             print constants.SUPER_PEER_TAG, self.normal_nodes
+
+            try:
+                conn = jsocket.Client()
+                conn.connect('localhost', self.other_id)
+                conn.send({
+                    'type': 'NNT',
+                    'data': new_normal
+                })
+                conn.close()
+            except:
+                print constants.SUPER_PEER_TAG, 'Other node seems down'
+
             self.normal_node_lock.release()
-            
             time.sleep(constants.HEARTBEAT_TIMEOUT())
 
     def select_peers(self):
@@ -200,7 +251,6 @@ class Server:
             print constants.SUPER_PEER_TAG, self.active_peers
             print constants.SUPER_PEER_TAG, self.normal_nodes
 
-            
             if len(self.active_peers) < constants.MAX_PEERS:
                 new_peer_length = max(
                     0, constants.MAX_PEERS - len(self.active_peers))

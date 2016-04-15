@@ -1,6 +1,7 @@
 import random
 
-LOGIN_PORT = 8000
+LOGIN_PORT1 = 8000
+LOGIN_PORT2 = 8001
 MAX_PEERS = 1
 
 

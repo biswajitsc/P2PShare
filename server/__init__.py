@@ -24,13 +24,13 @@ class Server:
     def run(self):
         print 'Server running'
 
-        _thread = threading.Thread(target=self.peer_heartbeat)
-        _thread.setDaemon(True)
-        _thread.start()
+        thread_obj = threading.Thread(target=self.peer_heartbeat)
+        thread_obj.setDaemon(True)
+        thread_obj.start()
 
-        _thread = threading.Thread(target=self.normal_heartbeat)
-        _thread.setDaemon(True)
-        _thread.start()
+        thread_obj = threading.Thread(target=self.normal_heartbeat)
+        thread_obj.setDaemon(True)
+        thread_obj.start()
 
         while True:
             conn, dummy = self.sock.accept()

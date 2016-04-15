@@ -13,14 +13,14 @@ class Peer(threading.Thread):
         self.node_id = id
         self.file_list = {}
         self.file_list_lock = threading.Lock()
-        # threading.Thread.__init__(self)
         super(Peer, self).__init__()
         print constants.PEER_TAG, 'Creating peer node'
         self.sock = jsocket.Server('localhost', self.node_id)
 
     def run(self):
-        # thread.start_new_thread(self.file_invalidator, ())
-        thread.start_new_thread(self.garbage_collection, ())
+        thread_obj = threading.Thread(target=self.garbage_collection)
+        thread_obj.daemon = True
+        thread_obj.start()
 
         sock = jsocket.Client()
         sock.connect('localhost', constants.LOGIN_PORT)
@@ -42,13 +42,7 @@ class Peer(threading.Thread):
             conn = jsocket.Client()
             conn.connect('localhost', recv_node_id)
 
-            if msg_type == 'ARE_YOU_ALIVE':
-                thread.start_new_thread(
-                    self.sock.send_and_close,
-                    (conn, {'type': 'I_AM_ALIVE', 'node_id': self.node_id})
-                )
-
-            elif msg_type == "SHARE_MY_FILES":
+            if msg_type == "SHARE_MY_FILES":
                 # Use a mutex or a lock while accessing critical section
                 # file_list of a peer.
                 file_names = data['shared_files']
@@ -102,25 +96,24 @@ class Peer(threading.Thread):
         # self.sock.send_and_close(conn, msg)
         conn.close()
 
-    def delete_files(self, conn, node_id, file_names):
-        self.file_list_lock.acquire()
-        for i in range(len(file_names)):
-            if ((node_id, file_names[i]) in self.file_list):
-                del self.file_list[(node_id, file_names[i])]
-        self.file_list_lock.release()
-        print constants.PEER_TAG, " : Files Deleted from " + str(node_id) + "!!"
-        self.print_file_table()
-        # msg = {'type': 'FILES_DELETED_ACK', 'node_id' : self.node_id}
-        # self.sock.send_and_close(conn, msg)
-        conn.close()
+    # def delete_files(self, conn, node_id, file_names):
+    #     self.file_list_lock.acquire()
+    #     for i in range(len(file_names)):
+    #         if ((node_id, file_names[i]) in self.file_list):
+    #             del self.file_list[(node_id, file_names[i])]
+    #     self.file_list_lock.release()
+    #     print constants.PEER_TAG, " : Files Deleted from " + str(node_id) + "!!"
+    #     self.print_file_table()
+    # msg = {'type': 'FILES_DELETED_ACK', 'node_id' : self.node_id}
+    # self.sock.send_and_close(conn, msg)
+    #     conn.close()
 
     def garbage_collection(self):
-        prev_time = datetime.datetime.now()
+        prev_time = time.time()
         while(True):
-            curr_time = datetime.datetime.now()
+            curr_time = time.time()
             time_elapsed = curr_time - prev_time
-            if time_elapsed.total_seconds() < 300:
-                continue
+            time.sleep(max(0, constants.INVALIDATE_TIMEOUT - time_elapsed))
             prev_time = curr_time
             self.file_list_lock.acquire()
             delete_files = []
@@ -133,6 +126,13 @@ class Peer(threading.Thread):
             print constants.PEER_TAG, " : Garbage Collection Performed!!"
             self.file_list_lock.release()
             self.print_file_table()
+
+            conn = jsocket.Client()
+            conn.connect('localhost', constants.LOGIN_PORT)
+            conn.send_and_close({
+                'type': 'I_AM_ALIVE',
+                'node_id': self.node_id
+            })
 
     def print_file_table(self):
         print "\n+++++++++++++++++++++++++++++++++", str(constants.PEER_TAG), ": File Table +++++++++++++++++++++++\n"

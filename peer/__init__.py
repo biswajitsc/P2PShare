@@ -26,7 +26,7 @@ class Peer(threading.Thread):
         thread_obj.start()
 
         sock = jsocket.Client()
-        sock.connect('localhost', constants.LOGIN_PORT)
+        sock.connect('localhost', constants.LOGIN_PORT1)
         sock.send({'type': 'I_AM_PEER', 'node_id': self.node_id})
         sock.close()
 
@@ -127,7 +127,7 @@ class Peer(threading.Thread):
             self.print_file_table()
 
             conn = jsocket.Client()
-            conn.connect('localhost', constants.LOGIN_PORT)
+            conn.connect('localhost', constants.LOGIN_PORT1)
             msg = {
                 'type': 'I_AM_ALIVE',
                 'node_id': self.node_id

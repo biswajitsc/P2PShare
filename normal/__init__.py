@@ -21,9 +21,10 @@ class NormalNode(threading.Thread):
         self._is_peer = False
         self._search_string = None
         self._search_results = []
-        threading.Thread.__init__(self)
+        super(NormalNode, self).__init__()
         print constants.NORMAL_TAG, 'Creating normal node'
 
+        self._log_file = open('log.txt', 'a')
         conn = jsocket.Client()
 
         self._shared_folder = os.path.join('Share', str(self._node_id))
@@ -34,7 +35,7 @@ class NormalNode(threading.Thread):
         self._make_sure_exits('Download')
         self._make_sure_exits(self._download_folder)
 
-        print constants.NORMAL_TAG, 'Shared folder', self._shared_folder
+        print >> self._log_file, constants.NORMAL_TAG, 'Shared folder', self._shared_folder
         self._sock = jsocket.Server('localhost', self._node_id)
 
         conn.connect('localhost', constants.LOGIN_PORT)
@@ -42,13 +43,14 @@ class NormalNode(threading.Thread):
             'type': 'I_AM_ONLINE',
             'node_id': self._node_id
         })
-        print constants.NORMAL_TAG, 'Sent I_AM_ONLINE'
+        print >> self._log_file, constants.NORMAL_TAG, 'Sent I_AM_ONLINE'
         conn.close()
 
     def run(self):
         thread.start_new_thread(self._listen, ())
         thread.start_new_thread(self._auto_get_write_peers, ())
         while True:
+            print '$',
             command = raw_input().strip().split()
             if command[0] == 'search':
                 # Send file to peers, wait for response
@@ -94,7 +96,7 @@ class NormalNode(threading.Thread):
 
     def _listen(self):
         while True:
-            print constants.NORMAL_TAG, 'Waiting for connection'
+            print >> self._log_file, constants.NORMAL_TAG, 'Waiting for connection'
             data = ''
             conn, dummy = self._sock.accept()
             data = self._sock.recv(conn)
@@ -102,8 +104,8 @@ class NormalNode(threading.Thread):
             if data == '':
                 continue
 
-            print constants.NORMAL_TAG, "Data is : ",
-            print data
+            print >> self._log_file, constants.NORMAL_TAG, "Data is : ",
+            print >> self._log_file, data
             incoming_id = int(data['node_id'])
             msg_type = data['type']
 
@@ -118,7 +120,7 @@ class NormalNode(threading.Thread):
 
             elif msg_type == 'SEARCH_RESULT':
                 # Save the result, and print it
-                thread.start_new_thread(self._show_result, ())
+                thread.start_new_thread(self._show_result, (data,))
 
             elif msg_type == 'DOWNLOAD':
                 # Some one wants to download one of its files
@@ -128,21 +130,21 @@ class NormalNode(threading.Thread):
 
             elif msg_type == 'YOUR_READ_PEERS':
                 # Get the peer list and send them its file list
-                thread.start_new_thread(self._ask_peers, (incoming_id, data))
+                thread.start_new_thread(self._ask_peers, (data,))
 
             elif msg_type == 'YOUR_WRITE_PEERS':
                 # Get the peer list and send them its file list
                 thread.start_new_thread(self._send_file_list, (data,))
 
             else:
-                print 'Unidentified message type {}'.format(msg_type)
+                print >> self._log_file, 'Unidentified message type {}'.format(msg_type)
 
             
     def _auto_get_write_peers(self):
         # time.sleep(1)
         conn = jsocket.Client()
         while True:
-            print constants.NORMAL_TAG, 'Calling _auto_get_write_peers'
+            print >> self._log_file, constants.NORMAL_TAG, 'Calling _auto_get_write_peers'
             conn = jsocket.Client()
             conn.connect('localhost', constants.LOGIN_PORT)
             conn.send({
@@ -162,8 +164,8 @@ class NormalNode(threading.Thread):
         conn.close()
 
     def _print_msg_info(self, data):
-        print constants.NORMAL_TAG,
-        print 'Recieved {} from {}.'.format(data['type'], data['node_id'])
+        print >> self._log_file, constants.NORMAL_TAG,
+        print >> self._log_file, 'Recieved {} from {}.'.format(data['type'], data['node_id'])
 
     def _make_sure_exits(self, folder):
         try:
@@ -172,11 +174,12 @@ class NormalNode(threading.Thread):
             if not os.path.isdir(folder):
                 raise
 
-    def _show_result(self):
+    def _show_result(self, data):
         self._search_results = data['file_list']
-        print '$ Search Results'
+        print 'Search Results'
         for i in xrange(len(self._search_results)):
             print i, self._search_results[i][0], self._search_results[i][1]
+        print '$',
 
     def _send_file(self, node_id, file_path):
         conn = jsocket.Client()
@@ -202,12 +205,12 @@ class NormalNode(threading.Thread):
 
     def _send_file_list(self, data):
         peers = data['peers']
-        print constants.NORMAL_TAG, peers
+        print >> self._log_file, constants.NORMAL_TAG, peers
         file_list = []
         for (dir_path, dir_names, file_names) in os.walk(self._shared_folder):
             file_list.extend(file_names)
-        print constants.NORMAL_TAG, 'File list'
-        print file_list
+        print >> self._log_file, constants.NORMAL_TAG, 'File list'
+        print >> self._log_file, file_list
         for p in peers:
             try:
                 conn = jsocket.Client()

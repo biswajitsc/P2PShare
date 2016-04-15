@@ -68,7 +68,7 @@ class Server:
                 print 'Unidentified message type {}'.format(msg_type)
                 # conn.close()
 
-    def get_peers_read(self):
+    def get_peers_read(self, inc_id):
         conn = jsocket.Client()
         conn.connect('localhost', inc_id)
         print constants.SUPER_PEER_TAG, 'entered GET_PEERS_READ'

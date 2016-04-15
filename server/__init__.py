@@ -201,7 +201,7 @@ class Server:
                         continue
                 else:
                     new_peer[peer_i] = last_access
-                    # self.active_peers.add(peer_i)
+                    self.active_peers.add(peer_i)
 
             self.active_peers_timestamps = new_peer
             print constants.SUPER_PEER_TAG(self.node_id), 'Cleaning peer nodes done'
@@ -237,7 +237,8 @@ class Server:
                         continue
                 else:
                     new_normal[normal] = last_access
-                    # self.normal_nodes.add(normal)
+                    if self.peer_eligible(normal):
+                        self.normal_nodes.add(normal)
 
             self.normal_nodes_timestamps = new_normal
             print constants.SUPER_PEER_TAG(self.node_id), 'Cleaning normal nodes done'

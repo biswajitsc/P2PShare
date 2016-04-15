@@ -13,13 +13,13 @@ class Server:
     def __init__(self):
         print 'Server running'
         self.active_peers = set()
+        self.active_peers_lock = threading.Lock()
         self.normal_nodes = set()
         self.normal_nodes_timestamps = {}
         self.active_peers_lock = threading.Lock()
         self.printing_lock = threading.Lock()
         self.sock = jsocket.Server('localhost', constants.LOGIN_PORT)
         self.node_id = constants.LOGIN_PORT
-        # print self.sock
 
     def run(self):
         thread.start_new_thread(self.heartbeat, ())
@@ -48,22 +48,21 @@ class Server:
                     )
                 else:
                     conn.close()
-            
+
             elif msg_type == 'GET_PEERS_WRITE':
                 print constants.SUPER_PEER_TAG, 'entered GET_PEERS_WRITE'
                 self.active_peers_lock.acquire()
                 self.normal_nodes_timestamps[inc_id] = time.time()
                 self.active_peers_lock.release()
                 print constants.SUPER_PEER_TAG, 'calling GET_PEERS_WRITE thread'
-                write_peers = self.get_peers_write()
                 thread.start_new_thread(
                     self.sock.send_and_close,
                     (conn, {
                         'type': 'YOUR_WRITE_PEERS',
                         'node_id': self.node_id,
-                        'data': write_peers
-                        })
-                    )
+                        'data': self.get_peers_write()
+                    })
+                )
 
             elif msg_type == 'GET_PEERS_READ':
                 thread.start_new_thread(
@@ -74,14 +73,14 @@ class Server:
                         'data': self.get_peers_read()
                     })
                 )
-            
+
             elif msg_type == 'PEER_OFFLINE':
                 thread.start_new_thread(self.peer_offline, (data['peer_id'],))
                 conn.close()
-            
+
             elif msg_type == 'I_AM_PEER':
                 thread.start_new_thread(self.add_peer, (inc_id, conn))
-            
+
             else:
                 print 'Unidentified message type {}'.format(msg_type)
                 conn.close()
@@ -184,10 +183,11 @@ class Server:
 
                 self.active_peers_lock.release()
 
-            time.sleep(max(0, constants.INVALIDATE_TIMEOUT - (time.time() - sec_start)))
+            time.sleep(constants.INVALIDATE_TIMEOUT)
 
     def clean_normal_nodes(self):
         while True:
+            time_start = time.time()
             print constants.SUPER_PEER_TAG, 'clean_normal_nodes function'
             self.active_peers_lock.acquire()
             new_normal = {}
@@ -195,14 +195,14 @@ class Server:
                 if time.time() - last_access > constants.MAX_OFFLINE_TIME:
                     try:
                         self.normal_nodes.discard(normal)
-                        self.active_peers.discard(normal+1)
+                        self.active_peers.discard(normal + 1)
                         new_normal[normal] = last_access
                     except Exception as e:
                         continue
             self.normal_nodes_timestamps = new_normal
             self.active_peers_lock.release()
             print constants.SUPER_PEER_TAG, 'exiting clean_normal_nodes function'
-            time.sleep(20)
+            time.sleep(constants.INVALIDATE_TIMEOUT)
 
 
 def print_msg_info(data):

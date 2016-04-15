@@ -8,146 +8,139 @@ import re
 
 
 class Peer(threading.Thread):
-	
-	def __init__(self, id):
-		self.node_id = id
-		self.file_list = {}
-		self.file_list_lock = threading.Lock()
-		# threading.Thread.__init__(self)
-		super(Peer, self).__init__()
-		print constants.PEER_TAG, 'Creating peer node'
-		self.sock = jsocket.Server('localhost', self.node_id)
 
-	def run(self):
-		# thread.start_new_thread(self.file_invalidator, ())
-		thread.start_new_thread(self.garbage_collection, ())
+    def __init__(self, id):
+        self.node_id = id
+        self.file_list = {}
+        self.file_list_lock = threading.Lock()
+        # threading.Thread.__init__(self)
+        super(Peer, self).__init__()
+        print constants.PEER_TAG, 'Creating peer node'
+        self.sock = jsocket.Server('localhost', self.node_id)
 
-		sock = jsocket.Client()
-		sock.connect('localhost', constants.LOGIN_PORT)
-		sock.send({'type': 'I_AM_PEER', 'node_id' : self.node_id})
-		sock.close()
+    def run(self):
+        # thread.start_new_thread(self.file_invalidator, ())
+        thread.start_new_thread(self.garbage_collection, ())
 
-		while True:
-			conn, dummy = self.sock.accept()
-			data = self.sock.recv(conn)
-			print_msg_info(data)
-			conn.close()
+        sock = jsocket.Client()
+        sock.connect('localhost', constants.LOGIN_PORT)
+        sock.send({'type': 'I_AM_PEER', 'node_id': self.node_id})
+        sock.close()
 
-			recv_node_id = data['node_id']
-			msg_type = data['type']
-			
-			print constants.PEER_TAG, 'Data is: ',
-			print data
+        while True:
+            conn, dummy = self.sock.accept()
+            data = self.sock.recv(conn)
+            print_msg_info(data)
+            conn.close()
 
-			conn = jsocket.Client()
-			conn.connect('localhost', recv_node_id)
+            recv_node_id = data['node_id']
+            msg_type = data['type']
 
-			if msg_type == 'ARE_YOU_ALIVE':
-				thread.start_new_thread(
-					self.sock.send_and_close,
-					(conn, {'type': 'I_AM_ALIVE', 'node_id' : self.node_id})
-				)
-			
-			elif msg_type == "SHARE_MY_FILES":
-				# Use a mutex or a lock while accessing critical section file_list of a peer.
-				file_names = data['shared_files']
-				thread.start_new_thread(add_files, (conn, recv_node_id, file_names))
-			
-			elif msg_type == "DELETE_MY_FILES":
-				file_names = data['Deleted_files']
-				thread.start_new_thread(delete_files, (conn, recv_node_id, file_names))
-			
-			elif msg_type == "SEARCH":
-				query_file_name = data['query']
-				thread.start_new_thread(search_file_list, (conn, query_file_name, recv_node_id))
-			
-			else:
-				conn.close()
+            print constants.PEER_TAG, 'Data is: ',
+            print data
 
-	def search_file_list(self, conn, query, node_id):
-		query_strings = re.findall(r'\w+', query)
-		self.file_list_lock.acquire()
-		ranked_list = {}
-		for name in self.file_list:
-			strngs = re.findall(r'\w+', name[1])
-			count = 0
-			for string in query_strings:
-				for strng in strngs:
-					if (string in strng) or (strng in string):
-						count += 1
-						break
-			ranked_list[name] = (count * 1.0) / len(query_strings)				
-		self.file_list_lock.release()
-		sorted_tags = sorted(ranked_list.items(), key=operator.itemgetter(1), reverse=True)
-		sorted_file_list = []
-		for i in range(len(sorted_tags)):
-			sorted_file_list.append(sorted_tags[i][0])
-		msg = {'type' : "SEARCH_RESULT", 'file_list' : sorted_file_list}
-		self.sock.send_and_close(conn, msg)
+            conn = jsocket.Client()
+            conn.connect('localhost', recv_node_id)
 
+            if msg_type == 'ARE_YOU_ALIVE':
+                thread.start_new_thread(
+                    self.sock.send_and_close,
+                    (conn, {'type': 'I_AM_ALIVE', 'node_id': self.node_id})
+                )
 
-	def add_files(self, conn, node_id, file_names):
-		self.file_list_lock.aquire()
-		curr_time = datetime.datetime.now()
-		for i in range(len(file_names)):
-			self.file_list[(node_id, file_names[i])] = curr_time
-		self.file_list_lock.release()
-		print constants.PEER_TAG, " : Files Added from " + node_id + "!!"
-		self.print_file_table()
-		# msg = {'type': 'FILES_SHARED_ACK', 'node_id' : self.node_id}
-		# self.sock.send_and_close(conn, msg)
-		conn.close()
+            elif msg_type == "SHARE_MY_FILES":
+                # Use a mutex or a lock while accessing critical section
+                # file_list of a peer.
+                file_names = data['shared_files']
+                thread.start_new_thread(
+                    self.add_files, (conn, recv_node_id, file_names))
 
-	def delete_files(self, conn, node_id, file_names):
-		self.file_list_lock.aquire()
-		for i in range(len(file_names)):
-			if ((node_id, file_names[i]) in self.file_list):
-				del self.file_list[(node_id, file_names[i])]
-		self.file_list_lock.release()
-		print constants.PEER_TAG, " : Files Deleted from " + node_id + "!!"
-		self.print_file_table()
-		# msg = {'type': 'FILES_DELETED_ACK', 'node_id' : self.node_id}
-		# self.sock.send_and_close(conn, msg)
-		conn.close()
+            elif msg_type == "DELETE_MY_FILES":
+                file_names = data['Deleted_files']
+                thread.start_new_thread(
+                    self.delete_files, (conn, recv_node_id, file_names))
 
+            elif msg_type == "SEARCH":
+                query_file_name = data['query']
+                thread.start_new_thread(
+                    self.search_file_list, (conn, query_file_name, recv_node_id))
 
-	def garbage_collection(self):
-		prev_time = datetime.datetime.now()
-		while(True):
-			curr_time = datetime.datetime.now()
-			time_elapsed = curr_time - prev_time
-			if time_elapsed.total_seconds() < 300:
-				continue
-			prev_time = curr_time
-			self.file_list_lock.aquire()
-			delete_files = []
-			for index in self.file_list:
-				time_difference = self.file_list[index] - curr_time
-				if curr_time.total_seconds >= 600:
-					delete_files.append(index)
-			for index in delete_files:
-				del self.file_list[index]
-			print constants.PEER_TAG, " : Garbage Collection Performed!!"
-			self.file_list_lock.release()
-			self.print_file_table()
+            else:
+                conn.close()
 
-	def print_file_table(self):
-		print "\n+++++++++++++++++++++++++++++++++", constants.PEER_TAG, ": File Table +++++++++++++++++++++++\n"
-		self.file_list_lock.acquire()
-		for index in self.file_list:
-			print "Node Id : ", index[0], " | ", "File Name : ", index[1]
-		self.file_list_lock.release()
+    def search_file_list(self, conn, query, node_id):
+        query_strings = re.findall(r'\w+', query)
+        self.file_list_lock.acquire()
+        ranked_list = {}
+        for name in self.file_list:
+            strngs = re.findall(r'\w+', name[1])
+            count = 0
+            for string in query_strings:
+                for strng in strngs:
+                    if (string in strng) or (strng in string):
+                        count += 1
+                        break
+            ranked_list[name] = (count * 1.0) / len(query_strings)
+        self.file_list_lock.release()
+        sorted_tags = sorted(
+            ranked_list.items(), key=operator.itemgetter(1), reverse=True)
+        sorted_file_list = []
+        for i in range(len(sorted_tags)):
+            sorted_file_list.append(sorted_tags[i][0])
+        msg = {'type': "SEARCH_RESULT", 'file_list': sorted_file_list}
+        self.sock.send_and_close(conn, msg)
 
+    def add_files(self, conn, node_id, file_names):
+        self.file_list_lock.acquire()
+        curr_time = datetime.datetime.now()
+        for i in range(len(file_names)):
+            self.file_list[(node_id, file_names[i])] = curr_time
+        self.file_list_lock.release()
+        print constants.PEER_TAG, " : Files Added from " + str(node_id) + "!!"
+        self.print_file_table()
+        # msg = {'type': 'FILES_SHARED_ACK', 'node_id' : self.node_id}
+        # self.sock.send_and_close(conn, msg)
+        conn.close()
 
-	# def file_list_manager(self, data):
-	#     for f in data.keylist():
-	#         if f.startswith('file'):
-	#             f = data[f]
-	#             self.file_list.insert(f)
-	#             self.file_time = time.time()
+    def delete_files(self, conn, node_id, file_names):
+        self.file_list_lock.acquire()
+        for i in range(len(file_names)):
+            if ((node_id, file_names[i]) in self.file_list):
+                del self.file_list[(node_id, file_names[i])]
+        self.file_list_lock.release()
+        print constants.PEER_TAG, " : Files Deleted from " + str(node_id) + "!!"
+        self.print_file_table()
+        # msg = {'type': 'FILES_DELETED_ACK', 'node_id' : self.node_id}
+        # self.sock.send_and_close(conn, msg)
+        conn.close()
 
-	# def file_invalidator(self):
-	#     pass
+    def garbage_collection(self):
+        prev_time = datetime.datetime.now()
+        while(True):
+            curr_time = datetime.datetime.now()
+            time_elapsed = curr_time - prev_time
+            if time_elapsed.total_seconds() < 300:
+                continue
+            prev_time = curr_time
+            self.file_list_lock.acquire()
+            delete_files = []
+            for index in self.file_list:
+                time_difference = self.file_list[index] - curr_time
+                if curr_time.total_seconds >= 600:
+                    delete_files.append(index)
+            for index in delete_files:
+                del self.file_list[index]
+            print constants.PEER_TAG, " : Garbage Collection Performed!!"
+            self.file_list_lock.release()
+            self.print_file_table()
+
+    def print_file_table(self):
+        print "\n+++++++++++++++++++++++++++++++++", str(constants.PEER_TAG), ": File Table +++++++++++++++++++++++\n"
+        self.file_list_lock.acquire()
+        for index in self.file_list:
+            print "Node Id : ", str(index[0]), " | ", "File Name : ", str(index[1])
+        self.file_list_lock.release()
+
 
 def print_msg_info(data):
     print constants.PEER_TAG,

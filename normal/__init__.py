@@ -21,6 +21,7 @@ class NormalNode(threading.Thread):
         self._search_results = []
         threading.Thread.__init__(self)
         print constants.NORMAL_TAG, 'Creating normal node'
+        
         self._conn = jsocket.Client()
 
         self._shared_folder = os.path.join('Share' + str(self._node_id))
@@ -107,7 +108,6 @@ class NormalNode(threading.Thread):
                     self_peer = peer.Peer(self._node_id + 1)
                     self_peer.daemon = True
                     self_peer.start()
-                    self_peer.join()
 
             elif msg_type == 'SEARCH_RESULT':
                 # Save the result, and print it
@@ -126,7 +126,7 @@ class NormalNode(threading.Thread):
             elif msg_type == 'YOUR_READ_PEERS':
                 # Get the peer list and send them its file list
                 if self._search_string is not None:
-                    peers = data['peers']
+                    peers = data['data']['peers']
                     for p in peers:
                         self._conn.connect('localhost', p)
                         self._conn.send({
@@ -139,7 +139,7 @@ class NormalNode(threading.Thread):
 
             elif msg_type == 'YOUR_WRITE_PEERS':
                 # Get the peer list and send them its file list
-                peers = data['peers']
+                peers = data['data']['peers']
                 print constants.NORMAL_TAG, peers
                 file_list = []
                 for (dir_path, dir_names, file_names) in os.walk(self._shared_folder):
@@ -168,7 +168,7 @@ class NormalNode(threading.Thread):
                 'node_id': self._node_id
             })
             self._conn.close()
-            time.sleep(20)
+            time.sleep(constants.INVALIDATE_TIMEOUT)
 
     def _get_read_peers(self):
         self._conn.connect('localhost', constants.LOGIN_PORT)

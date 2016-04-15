@@ -32,18 +32,18 @@ class Server(object):
         client, client_addr = self.socket.accept()
         return client, client_addr
 
-    def send(self, client, data):
-        if not client:
-            raise Exception('Cannot send data, no client is connected')
-        _send(client.socket, data)
-        return self
+    # def send(self, client, data):
+    #     if not client:
+    #         raise Exception('Cannot send data, no client is connected')
+    #     _send(client.socket, data)
+    #     return self
 
-    def send_and_close(self, client, data):
-        if not client:
-            raise Exception('Cannot send data, no client is connected')
-        _send(client.socket, data)
-        client.close()
-        return self
+    # def send_and_close(self, client, data):
+    #     if not client:
+    #         raise Exception('Cannot send data, no client is connected')
+    #     _send(client.socket, data)
+    #     client.close()
+    #     return self
 
     def recv(self, client):
         if not client:

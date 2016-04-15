@@ -40,7 +40,7 @@ class NormalNode(threading.Thread):
         print >> self._log_file, constants.NORMAL_TAG, 'Shared folder', self._shared_folder
         self._sock = jsocket.Server('localhost', self._node_id)
 
-        conn.connect('localhost', constants.LOGIN_PORT)
+        conn.connect('localhost', constants.LOGIN_PORT1)
         conn.send({
             'type': 'I_AM_ONLINE',
             'node_id': self._node_id
@@ -155,7 +155,7 @@ class NormalNode(threading.Thread):
         while True:
             print >> self._log_file, constants.NORMAL_TAG, 'Calling _auto_get_write_peers'
             conn = jsocket.Client()
-            conn.connect('localhost', constants.LOGIN_PORT)
+            conn.connect('localhost', constants.LOGIN_PORT1)
             conn.send({
                 'type': 'GET_PEERS_WRITE',
                 'node_id': self._node_id
@@ -165,7 +165,7 @@ class NormalNode(threading.Thread):
 
     def _get_read_peers(self):
         conn = jsocket.Client()
-        conn.connect('localhost', constants.LOGIN_PORT)
+        conn.connect('localhost', constants.LOGIN_PORT1)
         conn.send({
             'type': 'GET_PEERS_READ',
             'node_id': self._node_id

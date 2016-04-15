@@ -145,30 +145,39 @@ class Server:
     def peer_heartbeat(self):
         while True:
             print constants.SUPER_PEER_TAG, 'Cleaning peer nodes'
+            print constants.SUPER_PEER_TAG, self.active_peers
             self.active_peers_lock.acquire()
             new_peer = {}
 
             for peer_i, last_access in self.active_peers_timestamps.items():
-                if time.time() - last_access > constants.MAX_OFFLINE_TIME:
+                print peer_i, time.time() - last_access
+                if time.time() - last_access > constants.MAX_OFFLINE_TIME():
                     try:
                         self.active_peers.discard(peer_i)
+                        print peer_i
                     except Exception:
                         continue
                 else:
                     new_peer[peer_i] = last_access
 
             self.active_peers_timestamps = new_peer
+            print constants.SUPER_PEER_TAG, 'Cleaning peer nodes done'
+            print constants.SUPER_PEER_TAG, self.active_peers
             self.active_peers_lock.release()
+            
             time.sleep(constants.HEARTBEAT_TIMEOUT())
 
     def normal_heartbeat(self):
         while True:
             print constants.SUPER_PEER_TAG, 'Cleaning normal nodes'
+            print constants.SUPER_PEER_TAG, self.normal_nodes
             self.normal_node_lock.acquire()
             new_normal = {}
             for normal, last_access in self.normal_nodes_timestamps.items():
+                print constants.SUPER_PEER_TAG, normal, time.time() - last_access
                 if time.time() - last_access > 200:
                     try:
+                        print constants.SUPER_PEER_TAG, normal
                         self.normal_nodes.discard(normal)
                     except Exception:
                         continue
@@ -176,7 +185,10 @@ class Server:
                     new_normal[normal] = last_access
 
             self.normal_nodes_timestamps = new_normal
+            print constants.SUPER_PEER_TAG, 'Cleaning normal nodes done'
+            print constants.SUPER_PEER_TAG, self.normal_nodes
             self.normal_node_lock.release()
+            
             time.sleep(constants.HEARTBEAT_TIMEOUT())
 
     def select_peers(self):
@@ -185,6 +197,10 @@ class Server:
             self.active_peers_lock.acquire()
             self.normal_node_lock.acquire()
 
+            print constants.SUPER_PEER_TAG, self.active_peers
+            print constants.SUPER_PEER_TAG, self.normal_nodes
+
+            
             if len(self.active_peers) < constants.MAX_PEERS:
                 new_peer_length = max(
                     0, constants.MAX_PEERS - len(self.active_peers))
@@ -207,8 +223,8 @@ class Server:
                     except Exception:
                         conn.close()
 
-            print constants.SUPER_PEER_TAG, self.active_peers
             print constants.SUPER_PEER_TAG, 'Selecting Peers Done'
+            print constants.SUPER_PEER_TAG, self.active_peers
             self.normal_node_lock.release()
             self.active_peers_lock.release()
 

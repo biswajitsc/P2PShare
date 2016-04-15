@@ -209,11 +209,15 @@ class NormalNode(threading.Thread):
         print constants.NORMAL_TAG, 'File list'
         print file_list
         for p in peers:
-            conn = jsocket.Client()
-            conn.connect('localhost', p)
-            conn.send({
-                'type': 'SHARE_MY_FILES',
-                'node_id': self._node_id,
-                'shared_files': file_list
-            })
-            conn.close()
+            try:
+                conn = jsocket.Client()
+                conn.connect('localhost', p)
+                conn.send({
+                    'type': 'SHARE_MY_FILES',
+                    'node_id': self._node_id,
+                    'shared_files': file_list
+                })
+                conn.close()
+            except Exception as e:
+                conn.close()
+                continue

@@ -199,8 +199,7 @@ class NormalNode(threading.Thread):
         file_list = []
         for (dir_path, dir_names, file_names) in os.walk(self._shared_folder):
             file_list.extend(file_names)
-        print constants.NORMAL_TAG
-        print file_list
+        print constants.NORMAL_TAG, 'sending file list', file_list
         for p in peers:
             self._conn.connect('localhost', p)
             self._conn.send({

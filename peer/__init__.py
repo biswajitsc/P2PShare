@@ -111,18 +111,23 @@ class Peer(threading.Thread):
 
     def garbage_collection(self):
         while(True):
-            curr_time = datetime.datetime.now()
             time.sleep(constants.INVALIDATE_TIMEOUT)
             self.file_list_lock.acquire()
             delete_files = []
+            curr_time = datetime.datetime.now()
             for index in self.file_list:
-                time_difference = self.file_list[index] - curr_time
+                time_difference = curr_time - self.file_list[index]
+                print "Time Interval for file", index[1], " is : ", curr_time, " - ", self.file_list[index], " : ", time_difference.total_seconds()
                 if time_difference.total_seconds() >= constants.FILE_GARBAGED_INTERVAL:
                     delete_files.append(index)
             for index in delete_files:
                 del self.file_list[index]
             print constants.PEER_TAG, " : Garbage Collection Performed!!"
             self.file_list_lock.release()
+            print "\n-------------------- Files to be deleted --------------------------\n"
+            for index in delete_files:
+                print "Node Id : ", index[0], "File Name : ", index[1]
+
             self.print_file_table()
 
             conn = jsocket.Client()

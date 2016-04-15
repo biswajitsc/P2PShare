@@ -129,16 +129,6 @@ class Peer(threading.Thread):
                 del self.file_list[index]
             self.file_list_lock.release()
 
-    # def file_list_manager(self, data):
-    #     for f in data.keylist():
-    #         if f.startswith('file'):
-    #             f = data[f]
-    #             self.file_list.insert(f)
-    #             self.file_time = time.time()
-
-    # def file_invalidator(self):
-    #     pass
-
 
 def print_msg_info(data):
     print constants.PEER_TAG,

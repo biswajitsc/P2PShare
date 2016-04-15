@@ -24,7 +24,7 @@ class NormalNode(threading.Thread):
         threading.Thread.__init__(self)
         print constants.NORMAL_TAG, 'Creating normal node'
 
-        self._conn = jsocket.Client()
+        conn = jsocket.Client()
 
         self._shared_folder = os.path.join('Share', str(self._node_id))
         self._make_sure_exits('Share')
@@ -37,13 +37,13 @@ class NormalNode(threading.Thread):
         print constants.NORMAL_TAG, 'Shared folder', self._shared_folder
         self._sock = jsocket.Server('localhost', self._node_id)
 
-        self._conn.connect('localhost', constants.LOGIN_PORT)
-        self._conn.send({
+        conn.connect('localhost', constants.LOGIN_PORT)
+        conn.send({
             'type': 'I_AM_ONLINE',
             'node_id': self._node_id
         })
         print constants.NORMAL_TAG, 'Sent I_AM_ONLINE'
-        self._conn.close()
+        conn.close()
 
     def run(self):
         thread.start_new_thread(self._listen, ())
@@ -66,8 +66,9 @@ class NormalNode(threading.Thread):
                     result = self._search_results[int(command[1])]
                 except Exception:
                     print 'Invalid id'
-                self._conn.connect('localhost', result[1])
-                self._conn.send({
+                conn = jsocket.Client()
+                conn.connect('localhost', result[1])
+                conn.send({
                     'type': 'DOWNLOAD',
                     'node_id': self._node_id,
                     'file_path': result[0]
@@ -77,12 +78,12 @@ class NormalNode(threading.Thread):
                 print constants.NORMAL_TAG, 'Downloading from', result[1], 'to', file_name
                 with open(os.path.join(self._shared_folder, file_name), 'wb') as file_to_write:
                     while True:
-                        data_read = self._conn.recv(BUFFER_SIZE)
+                        data_read = conn.recv(BUFFER_SIZE)
                         if not data_read:
                             break
                         file_to_write.write(data_read)
                     file_to_write.close()
-                self._conn.close()
+                conn.close()
 
             elif command[0] == 'help':
                 print 'search   [filename] : Search for a file'
@@ -93,8 +94,11 @@ class NormalNode(threading.Thread):
 
     def _listen(self):
         while True:
+            print constants.NORMAL_TAG, 'Waiting for connection'
             conn, dummy = self._sock.accept()
             data = self._sock.recv(conn)
+            conn.close()
+
             print constants.NORMAL_TAG, "Data is : ",
             print data
             incoming_id = int(data['node_id'])
@@ -130,27 +134,29 @@ class NormalNode(threading.Thread):
             else:
                 print 'Unidentified message type {}'.format(msg_type)
 
-            conn.close()
-
+            
     def _auto_get_write_peers(self):
         # time.sleep(1)
+        conn = jsocket.Client()
         while True:
             print constants.NORMAL_TAG, 'Calling _auto_get_write_peers'
-            self._conn.connect('localhost', constants.LOGIN_PORT)
-            self._conn.send({
+            conn = jsocket.Client()
+            conn.connect('localhost', constants.LOGIN_PORT)
+            conn.send({
                 'type': 'GET_PEERS_WRITE',
                 'node_id': self._node_id
             })
-            self._conn.close()
+            conn.close()
             time.sleep(constants.GET_PEERS_TIMEOUT())
 
     def _get_read_peers(self):
-        self._conn.connect('localhost', constants.LOGIN_PORT)
-        self._conn.send({
+        conn = jsocket.Client()
+        conn.connect('localhost', constants.LOGIN_PORT)
+        conn.send({
             'type': 'GET_PEERS_READ',
             'node_id': self._node_id
         })
-        self._conn.close()
+        conn.close()
 
     def _print_msg_info(self, data):
         print constants.NORMAL_TAG,
@@ -181,13 +187,14 @@ class NormalNode(threading.Thread):
         if self._search_string is not None:
             peers = data['peers']
             for p in peers:
-                self._conn.connect('localhost', p)
-                self._conn.send({
+                conn = jsocket.Client()
+                conn.connect('localhost', p)
+                conn.send({
                     'type': 'SEARCH',
                     'node_id': self._node_id,
                     'query': self._search_string
                 })
-                self._conn.close()
+                conn.close()
             self._search_string = None
 
     def _send_file_list(self, data):
@@ -196,13 +203,14 @@ class NormalNode(threading.Thread):
         file_list = []
         for (dir_path, dir_names, file_names) in os.walk(self._shared_folder):
             file_list.extend(file_names)
-        print constants.NORMAL_TAG
+        print constants.NORMAL_TAG, 'File list'
         print file_list
         for p in peers:
-            self._conn.connect('localhost', p)
-            self._conn.send({
+            conn = jsocket.Client()
+            conn.connect('localhost', p)
+            conn.send({
                 'type': 'SHARE_MY_FILES',
                 'node_id': self._node_id,
                 'shared_files': file_list
             })
-            self._conn.close()
+            conn.close()

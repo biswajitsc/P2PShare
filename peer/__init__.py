@@ -82,7 +82,8 @@ class Peer(threading.Thread):
         for i in range(len(sorted_tags)):
             sorted_file_list.append(sorted_tags[i][0])
         msg = {'type': "SEARCH_RESULT", 'file_list': sorted_file_list}
-        self.sock.send_and_close(conn, msg)
+        conn.send(msg)
+        conn.close()
 
     def add_files(self, conn, node_id, file_names):
         self.file_list_lock.acquire()

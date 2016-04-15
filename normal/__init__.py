@@ -5,6 +5,7 @@ import jsocket
 import thread
 import time
 import constants
+import operator
 
 '''
 Threads of Normal Node
@@ -20,6 +21,7 @@ class NormalNode(threading.Thread):
         self._node_id = id
         self._is_peer = False
         self._search_string = None
+        self._cur_search_id = 0
         self._search_results = []
         super(NormalNode, self).__init__()
         print constants.NORMAL_TAG, 'Creating normal node'
@@ -56,8 +58,16 @@ class NormalNode(threading.Thread):
                 # Send file to peers, wait for response
                 if len(command) < 2:
                     raise ValueError('Search string not provided')
+                self._cur_search_id += 1
                 self._search_string = command[1]
+                self._cur_search_time = time.time()
+                self._search_results[:] = []
                 self._get_read_peers()
+                time.sleep(constants.SEARCH_WAIT)
+                self._search_results = sorted(self._search_results, key = operator.itemgetter(2), revers = True)[:10]
+                print 'Search Result:'
+                for i in range(len(self._search_results)):
+                    print i, self._search_results[1], self._search_results[0]
 
             elif command[0] == 'download':
                 # Download the given file
@@ -120,7 +130,7 @@ class NormalNode(threading.Thread):
 
             elif msg_type == 'SEARCH_RESULT':
                 # Save the result, and print it
-                thread.start_new_thread(self._show_result, (data,))
+                thread.start_new_thread(self._add_result, (data,))
 
             elif msg_type == 'DOWNLOAD':
                 # Some one wants to download one of its files
@@ -173,12 +183,12 @@ class NormalNode(threading.Thread):
             if not os.path.isdir(folder):
                 raise
 
-    def _show_result(self, data):
-        self._search_results = data['file_list']
-        print 'Search Results'
-        for i in xrange(len(self._search_results)):
-            print i, self._search_results[i][0], self._search_results[i][1]
-        print '$',
+    def _add_result(self, data):
+        if int(data['search_id']) < self._cur_search_id:
+            return
+        if time.time() - self._cur_search_time > constants.SEARCH_WAIT:
+            return
+        self._search_results.extend(data['file_list'])
 
     def _send_file(self, node_id, file_path):
         conn = jsocket.Client()
@@ -196,6 +206,7 @@ class NormalNode(threading.Thread):
                 conn.connect('localhost', p)
                 conn.send({
                     'type': 'SEARCH',
+                    'search_id': self._cur_search_id,
                     'node_id': self._node_id,
                     'query': self._search_string
                 })

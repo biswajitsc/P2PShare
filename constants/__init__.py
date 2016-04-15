@@ -4,8 +4,8 @@ import math
 LOGIN_PORT1 = 8000
 LOGIN_PORT2 = 8001
 MAX_PEERS = 1
+SEARCH_WAIT = 5
 WRITE_QUORUM = 2
-
 
 def MAX_OFFLINE_TIME():
     tval = 10

@@ -97,6 +97,8 @@ class NormalNode(threading.Thread):
             print constants.NORMAL_TAG, 'Waiting for connection'
             conn, dummy = self._sock.accept()
             data = self._sock.recv(conn)
+            conn.close()
+
             print constants.NORMAL_TAG, "Data is : ",
             print data
             incoming_id = int(data['node_id'])
@@ -131,13 +133,13 @@ class NormalNode(threading.Thread):
             else:
                 print 'Unidentified message type {}'.format(msg_type)
 
-            conn.close()
-
+            
     def _auto_get_write_peers(self):
         # time.sleep(1)
         conn = jsocket.Client()
         while True:
             print constants.NORMAL_TAG, 'Calling _auto_get_write_peers'
+            conn = jsocket.Client()
             conn.connect('localhost', constants.LOGIN_PORT)
             conn.send({
                 'type': 'GET_PEERS_WRITE',

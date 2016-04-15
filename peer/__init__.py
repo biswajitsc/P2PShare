@@ -130,7 +130,8 @@ class Peer(threading.Thread):
                 'type': 'I_AM_ALIVE',
                 'node_id': self.node_id
             }
-            self.sock.send_and_close(conn, msg)
+            conn.send(msg)
+            conn.close()
 
     def print_file_table(self):
         print "\n+++++++++++++++++++++++++++++++++", str(constants.PEER_TAG), ": File Table +++++++++++++++++++++++\n"

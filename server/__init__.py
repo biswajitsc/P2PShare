@@ -118,7 +118,7 @@ class Server:
         conn = jsocket.Client()
         conn.connect('localhost', inc_id)
         
-        if node_id in self.active_peers:
+        if inc_id in self.active_peers:
             conn.send({'type': 'ALREADY_PEER', 'node_id': self.node_id})
             conn.close()
         else:

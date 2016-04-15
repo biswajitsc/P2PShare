@@ -49,10 +49,10 @@ class Peer(threading.Thread):
                 thread.start_new_thread(
                     self.add_files, (conn, recv_node_id, file_names))
 
-            elif msg_type == "DELETE_MY_FILES":
-                file_names = data['Deleted_files']
-                thread.start_new_thread(
-                    self.delete_files, (conn, recv_node_id, file_names))
+            # elif msg_type == "DELETE_MY_FILES":
+            #     file_names = data['Deleted_files']
+            #     thread.start_new_thread(
+            #         self.delete_files, (conn, recv_node_id, file_names))
 
             elif msg_type == "SEARCH":
                 query_file_name = data['query']
@@ -109,17 +109,14 @@ class Peer(threading.Thread):
     #     conn.close()
 
     def garbage_collection(self):
-        prev_time = time.time()
         while(True):
-            curr_time = time.time()
-            time_elapsed = curr_time - prev_time
-            time.sleep(max(0, constants.INVALIDATE_TIMEOUT - time_elapsed))
-            prev_time = curr_time
+            curr_time = datetime.datetime.now()
+            time.sleep(constants.INVALIDATE_TIMEOUT)
             self.file_list_lock.acquire()
             delete_files = []
             for index in self.file_list:
                 time_difference = self.file_list[index] - curr_time
-                if curr_time.total_seconds >= 600:
+                if time_difference.total_seconds() >= 600:
                     delete_files.append(index)
             for index in delete_files:
                 del self.file_list[index]
@@ -129,10 +126,11 @@ class Peer(threading.Thread):
 
             conn = jsocket.Client()
             conn.connect('localhost', constants.LOGIN_PORT)
-            conn.send_and_close({
+            msg = {
                 'type': 'I_AM_ALIVE',
                 'node_id': self.node_id
-            })
+            }
+            self.sock.send_and_close(conn, msg)
 
     def print_file_table(self):
         print "\n+++++++++++++++++++++++++++++++++", str(constants.PEER_TAG), ": File Table +++++++++++++++++++++++\n"

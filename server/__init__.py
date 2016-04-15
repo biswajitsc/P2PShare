@@ -58,13 +58,12 @@ class Server:
                 self.normal_nodes_timestamps[inc_id] = time.time()
                 self.active_peers_lock.release()
                 print constants.SUPER_PEER_TAG, 'calling GET_PEERS_WRITE thread'
-                write_peers = self.get_peers_write()
                 thread.start_new_thread(
                     self.sock.send_and_close,
                     (conn, {
                         'type': 'YOUR_WRITE_PEERS',
                         'node_id': self.node_id,
-                        'data': write_peers
+                        'peers': self.get_peers_write()
                     })
                 )
 
@@ -74,7 +73,7 @@ class Server:
                     (conn, {
                         'type': 'YOUR_READ_PEERS',
                         'node_id': self.node_id,
-                        'data': self.get_peers_read()
+                        'peers': self.get_peers_read()
                     })
                 )
 
@@ -87,13 +86,12 @@ class Server:
 
     def get_peers_read(self):
         self.active_peers_lock.acquire()
-        peer_list = {}
-        peer_list['peers'] = []
+        peer_list = []
         if len(self.active_peers) > 0:
             sample_peers = random.sample(
                 self.active_peers, int(math.floor(len(self.active_peers) / 2)) + 1)
             for p in sample_peers:
-                peer_list['peers'].append(p)
+                peer_list.append(p)
         else:
             print '0 sample peers'
         self.active_peers_lock.release()
@@ -103,13 +101,12 @@ class Server:
         print constants.SUPER_PEER_TAG, 'inside get_peers_write function'
         print constants.SUPER_PEER_TAG, self.active_peers
         self.active_peers_lock.acquire()
-        peer_list = {}
-        peer_list['peers'] = []
+        peer_list = []
         if len(self.active_peers) > 0:
             sample_peers = random.sample(
                 self.active_peers, int(math.floor(len(self.active_peers) / 2)) + 1)
             for p in sample_peers:
-                peer_list['peers'].append(p)
+                peer_list.append(p)
         else:
             print '0 sample peers'
         self.active_peers_lock.release()

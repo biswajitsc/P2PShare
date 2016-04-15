@@ -1,20 +1,23 @@
+import os
 import threading
 import time
 import jsocket
 import thread
 import constants
 import datetime
+import operator
 import re
 
 
 class Peer(threading.Thread):
 
     def __init__(self, id):
+        super(Peer, self).__init__()
         self.node_id = id
         self.file_list = {}
         self.file_list_lock = threading.Lock()
-        super(Peer, self).__init__()
-        print constants.PEER_TAG, 'Creating peer node'
+        self._log_file = open('log.txt', 'a')
+        print >> self._log_file, constants.PEER_TAG, 'Creating peer node'
         self.sock = jsocket.Server('localhost', self.node_id)
 
     def run(self):
@@ -30,14 +33,14 @@ class Peer(threading.Thread):
         while True:
             conn, dummy = self.sock.accept()
             data = self.sock.recv(conn)
-            print_msg_info(data)
+            self.print_msg_info(data)
             conn.close()
 
             recv_node_id = data['node_id']
             msg_type = data['type']
 
-            print constants.PEER_TAG, 'Data is: ',
-            print data
+            print >> self._log_file, constants.PEER_TAG, 'Data is: ',
+            print >> self._log_file, data
 
             conn = jsocket.Client()
             conn.connect('localhost', recv_node_id)
@@ -74,14 +77,16 @@ class Peer(threading.Thread):
                     if (string in strng) or (strng in string):
                         count += 1
                         break
+            if count == 0:
+                continue
             ranked_list[name] = (count * 1.0) / len(query_strings)
         self.file_list_lock.release()
         sorted_tags = sorted(
             ranked_list.items(), key=operator.itemgetter(1), reverse=True)
         sorted_file_list = []
         for i in range(len(sorted_tags)):
-            sorted_file_list.append(sorted_tags[i][0])
-        msg = {'type': "SEARCH_RESULT", 'file_list': sorted_file_list}
+            sorted_file_list.append((sorted_tags[i][0][0], sorted_tags[i][0][1], sorted_tags[i][1]))
+        msg = {'type': "SEARCH_RESULT", 'node_id': self.node_id, 'file_list': sorted_file_list[:10]}
         conn.send(msg)
         conn.close()
 
@@ -91,7 +96,7 @@ class Peer(threading.Thread):
         for i in range(len(file_names)):
             self.file_list[(node_id, file_names[i])] = curr_time
         self.file_list_lock.release()
-        print constants.PEER_TAG, " : Files Added from " + str(node_id) + "!!"
+        print >> self._log_file, constants.PEER_TAG, " : Files Added from " + str(node_id) + "!!"
         self.print_file_table()
         # msg = {'type': 'FILES_SHARED_ACK', 'node_id' : self.node_id}
         # self.sock.send_and_close(conn, msg)
@@ -112,12 +117,12 @@ class Peer(threading.Thread):
             for index in delete_files:
                 del self.file_list[index]
             
-            print constants.PEER_TAG, " : Garbage Collection Performed!!"
+            print >> self._log_file, constants.PEER_TAG, " : Garbage Collection Performed!!"
             self.file_list_lock.release()
             
-            print "\n-------------------- Files to be deleted --------------------------\n"
+            print >> self._log_file, "\n-------------------- Files to be deleted --------------------------\n"
             for index in delete_files:
-                print "Node Id : ", index[0], "File Name : ", index[1]
+                print >> self._log_file, "Node Id : ", index[0], "File Name : ", index[1]
 
             self.print_file_table()
 
@@ -131,13 +136,13 @@ class Peer(threading.Thread):
             conn.close()
 
     def print_file_table(self):
-        print "\n+++++++++++++++++++++++++++++++++", str(constants.PEER_TAG), ": File Table +++++++++++++++++++++++\n"
+        print >> self._log_file, "\n+++++++++++++++++++++++++++++++++", str(constants.PEER_TAG), ": File Table +++++++++++++++++++++++\n"
         self.file_list_lock.acquire()
         for index in self.file_list:
-            print "Node Id : ", str(index[0]), " | ", "File Name : ", str(index[1])
+            print >> self._log_file, "Node Id : ", str(index[0]), " | ", "File Name : ", str(index[1])
         self.file_list_lock.release()
 
 
-def print_msg_info(data):
-    print constants.PEER_TAG,
-    print 'Recieved {} from {}.'.format(data['type'], data['node_id'])
+    def print_msg_info(self, data):
+        print >> self._log_file, constants.PEER_TAG,
+        print >> self._log_file, 'Recieved {} from {}.'.format(data['type'], data['node_id'])

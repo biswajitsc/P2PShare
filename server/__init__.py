@@ -95,7 +95,7 @@ class Server:
             self.normal_nodes_timestamps = set(data)
             self.normal_nodes_lock.release()
 
-    def get_peers_read(self):
+    def get_peers_read(self, inc_id):
         conn = jsocket.Client()
         conn.connect('localhost', inc_id)
         print constants.SUPER_PEER_TAG, 'entered GET_PEERS_READ'
@@ -106,8 +106,11 @@ class Server:
         self.active_peers_lock.acquire()
         peer_list = []
         if len(self.active_peers) > 0:
+            # sample_peers = random.sample(
+            # self.active_peers, int(math.floor(len(self.active_peers) / 2)) +
+            # 1)
             sample_peers = random.sample(
-                self.active_peers, int(math.floor(len(self.active_peers) / 2)) + 1)
+                self.active_peers, constants.GET_PEER_WRITE_SIZE(len(self.active_peers)))
             for p in sample_peers:
                 peer_list.append(p)
         else:
@@ -128,8 +131,11 @@ class Server:
         self.active_peers_lock.acquire()
         peer_list = []
         if len(self.active_peers) > 0:
+            # sample_peers = random.sample(
+            # self.active_peers, int(math.floor(len(self.active_peers) / 2)) +
+            # 1)
             sample_peers = random.sample(
-                self.active_peers, int(math.floor(len(self.active_peers) / 2)) + 1)
+                self.active_peers, constants.GET_PEER_READ_SIZE(len(self.active_peers)))
             for p in sample_peers:
                 peer_list.append(p)
         else:
@@ -251,9 +257,9 @@ class Server:
             print constants.SUPER_PEER_TAG, self.active_peers
             print constants.SUPER_PEER_TAG, self.normal_nodes
 
-            if len(self.active_peers) < constants.MAX_PEERS:
+            if len(self.active_peers) < constants.MAX_PEERS(len(self.normal_nodes)):
                 new_peer_length = max(
-                    0, constants.MAX_PEERS - len(self.active_peers))
+                    0, constants.MAX_PEERS(len(self.normal_nodes)) - len(self.active_peers))
                 print constants.SUPER_PEER_TAG, new_peer_length
                 print constants.SUPER_PEER_TAG, self.normal_nodes
                 print constants.SUPER_PEER_TAG, self.active_peers

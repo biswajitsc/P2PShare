@@ -22,6 +22,7 @@ class NormalNode(threading.Thread):
         self._search_results = []
         threading.Thread.__init__(self)
         print constants.NORMAL_TAG, 'Creating normal node'
+        
         self._conn = jsocket.Client()
 
         self._shared_folder = os.path.join('Share', str(self._node_id))

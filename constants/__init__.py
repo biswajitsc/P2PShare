@@ -2,7 +2,7 @@ import random
 
 LOGIN_PORT = 8000
 MAX_PEERS = 1
-
+SEARCH_WAIT = 5
 
 def MAX_OFFLINE_TIME():
     tval = 10

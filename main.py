@@ -4,6 +4,7 @@ import peer
 import sys
 import server
 import time
+import constants
 
 
 def main():
@@ -15,14 +16,19 @@ def main():
     node_id = sys.argv[1]
     node_id = node_id.lower()
 
-    if node_id == 'server':
-        server_obj = server.Server()
+    if node_id == 'server1':
+        server_obj = server.Server(
+            constants.LOGIN_PORT1, constants.LOGIN_PORT2)
+        server_obj.run()
+    if node_id == 'server2':
+        server_obj = server.Server(
+            constants.LOGIN_PORT2, constants.LOGIN_PORT1)
         server_obj.run()
     else:
         node_id = int(node_id)
-        if node_id <= 8000 or node_id > 9000 or node_id % 2 == 1:
+        if node_id <= 8001 or node_id > 9000 or node_id % 2 == 1:
             raise Exception('node_id must be an even number between\
-                8001 and 9000 inclusive.')
+                8002 and 9000 inclusive.')
 
         n_node = normal.NormalNode(node_id)
         n_node.daemon = True

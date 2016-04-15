@@ -106,7 +106,7 @@ class Server:
             for p in sample_peers:
                 peer_list.append(p)
         else:
-            print '0 sample peers'
+            print constants.SUPER_PEER_TAG,'0 sample peers'
         self.active_peers_lock.release()
         conn.send({
             'type': 'YOUR_WRITE_PEERS',

@@ -107,7 +107,6 @@ class NormalNode(threading.Thread):
                     self_peer = peer.Peer(self._node_id + 1)
                     self_peer.daemon = True
                     self_peer.start()
-                    self_peer.join()
 
             elif msg_type == 'SEARCH_RESULT':
                 # Save the result, and print it
@@ -168,7 +167,7 @@ class NormalNode(threading.Thread):
                 'node_id': self._node_id
             })
             self._conn.close()
-            time.sleep(20)
+            time.sleep(constants.INVALIDATE_TIMEOUT)
 
     def _get_read_peers(self):
         self._conn.connect('localhost', constants.LOGIN_PORT)

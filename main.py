@@ -30,10 +30,6 @@ def main():
 
         n_node.join()
 
-    # Keep the main thread alive
-    while True:
-        time.sleep(1)
-
     print 'Main exiting'
 
 

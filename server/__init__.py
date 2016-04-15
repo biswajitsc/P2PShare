@@ -157,7 +157,7 @@ class Server:
 
             self.active_peers_timestamps = new_peer
             self.active_peers_lock.release()
-            time.sleep(200)
+            time.sleep(constants.HEARTBEAT_TIMEOUT())
 
     def normal_heartbeat(self):
         while True:
@@ -175,7 +175,7 @@ class Server:
 
             self.normal_nodes_timestamps = new_normal
             self.normal_node_lock.release()
-            time.sleep(200)
+            time.sleep(constants.HEARTBEAT_TIMEOUT())
 
     def select_peers(self):
         while True:
@@ -210,7 +210,7 @@ class Server:
             self.normal_node_lock.release()
             self.active_peers_lock.release()
 
-            time.sleep(20)
+            time.sleep(constants.SELECT_PEER_TIMEOUT())
 
 
 def print_msg_info(data):

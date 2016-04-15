@@ -42,7 +42,7 @@ class Server:
             conn, dummy = self.sock.accept()
             # print conn
             data = self.sock.recv(conn)
-            print_msg_info(data)
+            self.print_msg_info(data)
             conn.close()
 
             inc_id = int(data['node_id'])
@@ -288,6 +288,6 @@ class Server:
             time.sleep(constants.SELECT_PEER_TIMEOUT())
 
 
-def print_msg_info(data):
-    print constants.SUPER_PEER_TAG(self.node_id),
-    print 'Received {} from {}.'.format(data['type'], data['node_id'])
+    def print_msg_info(self, data):
+        print constants.SUPER_PEER_TAG(self.node_id),
+        print 'Received {} from {}.'.format(data['type'], data['node_id'])

@@ -95,9 +95,12 @@ class NormalNode(threading.Thread):
     def _listen(self):
         while True:
             print constants.NORMAL_TAG, 'Waiting for connection'
+            data = ''
             conn, dummy = self._sock.accept()
             data = self._sock.recv(conn)
             conn.close()
+            if data == '':
+                continue
 
             print constants.NORMAL_TAG, "Data is : ",
             print data

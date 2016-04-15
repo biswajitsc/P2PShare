@@ -123,6 +123,8 @@ def _recv(socket):
     # read the length of the data, letter by letter until we reach EOL
     length_str = ''
     char = socket.recv(1)
+    if char == '':
+        return ''
     while char != '\n':
         length_str += char
         char = socket.recv(1)

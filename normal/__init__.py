@@ -24,12 +24,12 @@ class NormalNode(threading.Thread):
         self._conn = jsocket.Client()
 
         self._shared_folder = os.path.join('Share' + str(self._node_id))
-        self._make_sure_exits('Share')
+        # self._make_sure_exits('Share')
         self._make_sure_exits(self._shared_folder)
 
         self._download_folder = os.path.join('Download' + str(self._node_id))
-        self._make_sure_exits('Download')
-        self._make_sure_exits(self._shared_folder)
+        # self._make_sure_exits('Download')
+        self._make_sure_exits(self._download_folder)
 
         print constants.NORMAL_TAG, 'Shared folder', self._shared_folder
         self._sock = jsocket.Server('localhost', self._node_id)

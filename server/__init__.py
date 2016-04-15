@@ -16,6 +16,7 @@ class Server:
         self.normal_nodes = set()
         self.normal_nodes_timestamps = {}
         self.active_peers_lock = threading.Lock()
+        self.printing_lock = threading.Lock()
         self.sock = jsocket.Server('localhost', constants.LOGIN_PORT)
         self.node_id = constants.LOGIN_PORT
         # print self.sock

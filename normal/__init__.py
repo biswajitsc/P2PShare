@@ -1,7 +1,9 @@
 import os
+import sys
 import peer
 import threading
 import jsocket
+import socket
 import thread
 import time
 import constants
@@ -63,11 +65,17 @@ class NormalNode(threading.Thread):
                 self._cur_search_time = time.time()
                 self._search_results[:] = []
                 self._get_read_peers()
-                time.sleep(constants.SEARCH_WAIT)
-                self._search_results = sorted(self._search_results, key = operator.itemgetter(2), revers = True)[:10]
+                print 'Searching',
+                sys.stdout.flush()
+                for i in range(constants.SEARCH_WAIT):
+                    print '.',
+                    sys.stdout.flush()
+                    time.sleep(1)
+                print
+                self._search_results = sorted(self._search_results, key = operator.itemgetter(2), reverse = True)[:10]
                 print 'Search Result:'
                 for i in range(len(self._search_results)):
-                    print i, self._search_results[1], self._search_results[0]
+                    print i, self._search_results[i][1], self._search_results[i][0]
 
             elif command[0] == 'download':
                 # Download the given file
@@ -78,19 +86,20 @@ class NormalNode(threading.Thread):
                     result = self._search_results[int(command[1])]
                 except Exception:
                     print 'Invalid id'
+                print result
                 conn = jsocket.Client()
-                conn.connect('localhost', result[1])
+                conn.connect('localhost', result[0])
                 conn.send({
                     'type': 'DOWNLOAD',
                     'node_id': self._node_id,
-                    'file_path': result[0]
+                    'file_path': result[1]
                 })
                 print 'Enter file name'
                 file_name = raw_input().strip()
                 print constants.NORMAL_TAG, 'Downloading from', result[1], 'to', file_name
-                with open(os.path.join(self._shared_folder, file_name), 'wb') as file_to_write:
+                with open(os.path.join(self._download_folder, file_name), 'wb') as file_to_write:
                     while True:
-                        data_read = conn.recv(BUFFER_SIZE)
+                        data_read = conn.recv_socket(constants.BUFFER_SIZE)
                         if not data_read:
                             break
                         file_to_write.write(data_read)
@@ -110,7 +119,6 @@ class NormalNode(threading.Thread):
             data = ''
             conn, dummy = self._sock.accept()
             data = self._sock.recv(conn)
-            conn.close()
             if data == '':
                 continue
 
@@ -134,9 +142,9 @@ class NormalNode(threading.Thread):
 
             elif msg_type == 'DOWNLOAD':
                 # Some one wants to download one of its files
-                file_path = data['file_path']
+                file_path = os.path.join(self._shared_folder, data['file_path'])
                 thread.start_new_thread(
-                    self._send_file, (incoming_id, file_path))
+                    self._send_file, (conn, incoming_id, file_path))
 
             elif msg_type == 'YOUR_READ_PEERS':
                 # Get the peer list and send them its file list
@@ -148,7 +156,10 @@ class NormalNode(threading.Thread):
 
             else:
                 print >> self._log_file, 'Unidentified message type {}'.format(msg_type)
-
+            
+            if msg_type != 'DOWNLOAD':
+                conn.close()
+            
     def _auto_get_write_peers(self):
         # time.sleep(1)
         conn = jsocket.Client()
@@ -190,9 +201,7 @@ class NormalNode(threading.Thread):
             return
         self._search_results.extend(data['file_list'])
 
-    def _send_file(self, node_id, file_path):
-        conn = jsocket.Client()
-        conn.connect('localhost', node_id)
+    def _send_file(self, conn, node_id, file_path):
         with open(file_path, 'rb') as file_to_send:
             for line in file_to_send:
                 conn.sendall(line)

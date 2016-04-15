@@ -49,7 +49,7 @@ class Server(object):
         if not client:
             raise Exception('Cannot receive data, no client is connected')
         return _recv(client)
-
+    
     def close(self):
         if self.socket:
             self.socket.close()
@@ -94,7 +94,12 @@ class Client(object):
         if not self.socket:
             raise Exception('You have to connect first before receiving data')
         return _recv(self.socket)
-
+    
+    def recv_socket(self, size):
+        if not self.socket:
+            raise Exception('No socket')
+        return self.socket.recv(size)
+ 
     def recv_and_close(self):
         data = self.recv()
         self.close()

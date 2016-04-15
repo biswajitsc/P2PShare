@@ -228,7 +228,7 @@ class Server:
                         continue
                 else:
                     new_normal[normal] = last_access
-                    normal_nodes.add(normal)
+                    self.normal_nodes.add(normal)
 
             self.normal_nodes_timestamps = new_normal
             print constants.SUPER_PEER_TAG, 'Cleaning normal nodes done'

@@ -6,6 +6,7 @@ LOGIN_PORT2 = 8001
 MAX_PEERS = 1
 SEARCH_WAIT = 5
 WRITE_QUORUM = 2
+BUFFER_SIZE = 1024
 
 def MAX_OFFLINE_TIME():
     tval = 10
@@ -38,11 +39,12 @@ def FILE_INVALIDATE_TIMEOUT():
 
 
 def GET_PEER_READ_SIZE(num_peers):
-    return (num_peers - WRITE_QUORUM + 1)
+    write_quorum = min(2, num_peers)
+    return (num_peers - write_quorum + 1)
 
 
 def GET_PEER_WRITE_SIZE(num_peers):
-    return WRITE_QUORUM
+    return min(WRITE_QUORUM, num_peers)
 
 
 def MAX_PEERS(num_normal_nodes):

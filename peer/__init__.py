@@ -96,27 +96,15 @@ class Peer(threading.Thread):
         # self.sock.send_and_close(conn, msg)
         conn.close()
 
-    # def delete_files(self, conn, node_id, file_names):
-    #     self.file_list_lock.acquire()
-    #     for i in range(len(file_names)):
-    #         if ((node_id, file_names[i]) in self.file_list):
-    #             del self.file_list[(node_id, file_names[i])]
-    #     self.file_list_lock.release()
-    #     print constants.PEER_TAG, " : Files Deleted from " + str(node_id) + "!!"
-    #     self.print_file_table()
-    # msg = {'type': 'FILES_DELETED_ACK', 'node_id' : self.node_id}
-    # self.sock.send_and_close(conn, msg)
-    #     conn.close()
-
     def garbage_collection(self):
         while(True):
             curr_time = datetime.datetime.now()
-            time.sleep(constants.INVALIDATE_TIMEOUT)
+            time.sleep(constants.GARBAGE_COLLECT_TIMEOUT())
             self.file_list_lock.acquire()
             delete_files = []
             for index in self.file_list:
                 time_difference = self.file_list[index] - curr_time
-                if time_difference.total_seconds() >= 600:
+                if time_difference.total_seconds() >= constants.FILE_INVALIDATE_TIMEOUT():
                     delete_files.append(index)
             for index in delete_files:
                 del self.file_list[index]

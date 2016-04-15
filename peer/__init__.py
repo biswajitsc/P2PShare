@@ -82,7 +82,8 @@ class Peer(threading.Thread):
         for i in range(len(sorted_tags)):
             sorted_file_list.append(sorted_tags[i][0])
         msg = {'type': "SEARCH_RESULT", 'file_list': sorted_file_list}
-        self.sock.send_and_close(conn, msg)
+        conn.send(msg)
+        conn.close()
 
     def add_files(self, conn, node_id, file_names):
         self.file_list_lock.acquire()
@@ -116,7 +117,7 @@ class Peer(threading.Thread):
             delete_files = []
             for index in self.file_list:
                 time_difference = self.file_list[index] - curr_time
-                if time_difference.total_seconds() >= 600:
+                if time_difference.total_seconds() >= constants.FILE_GARBAGED_INTERVAL:
                     delete_files.append(index)
             for index in delete_files:
                 del self.file_list[index]

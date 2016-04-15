@@ -111,7 +111,7 @@ class Peer(threading.Thread):
     def garbage_collection(self):
         while(True):
             curr_time = datetime.datetime.now()
-            time.sleep(max(0, constants.INVALIDATE_TIMEOUT - time_elapsed))
+            time.sleep(constants.INVALIDATE_TIMEOUT)
             self.file_list_lock.acquire()
             delete_files = []
             for index in self.file_list:
@@ -126,10 +126,11 @@ class Peer(threading.Thread):
 
             conn = jsocket.Client()
             conn.connect('localhost', constants.LOGIN_PORT)
-            conn.send_and_close({
+            msg = {
                 'type': 'I_AM_ALIVE',
                 'node_id': self.node_id
-            })
+            }
+            self.sock.send_and_close(conn, msg)
 
     def print_file_table(self):
         print "\n+++++++++++++++++++++++++++++++++", str(constants.PEER_TAG), ": File Table +++++++++++++++++++++++\n"

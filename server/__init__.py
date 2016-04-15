@@ -107,7 +107,7 @@ class Server:
             for p in sample_peers:
                 peer_list.append(p)
         else:
-            print constants.SUPER_PEER_TAG,'0 sample peers'
+            print constants.SUPER_PEER_TAG, '0 sample peers'
         self.active_peers_lock.release()
         conn.send({
             'type': 'YOUR_WRITE_PEERS',
@@ -203,9 +203,9 @@ class Server:
                             {'type': 'YOU_ARE_PEER', 'node_id': self.node_id})
                         conn.close()
                         self.active_peers.add(int(p) + 1)
-                    except Exception as e:
+                    except Exception:
                         conn.close()
-                            
+
             print constants.SUPER_PEER_TAG, self.active_peers
             print constants.SUPER_PEER_TAG, 'Selecting Peers Done'
             self.normal_node_lock.release()

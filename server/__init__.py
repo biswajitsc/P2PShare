@@ -185,21 +185,26 @@ class Server:
     def select_peers(self):
         while True:
             print constants.SUPER_PEER_TAG, 'Selecting Peers'
+            self.active_peers_lock.acquire()
             if len(self.active_peers) < constants.MAX_PEERS:
-                self.active_peers_lock.acquire()
-                new_peer_length = max(0, constants.MAX_PEERS - len(self.active_peers))
-                new_peer_length = min(new_peer_length, len(self.normal_nodes - self.active_peers))
-                new_peers = random.sample(self.normal_nodes - self.active_peers, new_peer_length)
+                new_peer_length = max(
+                    0, constants.MAX_PEERS - len(self.active_peers))
+                new_peer_length = min(
+                    new_peer_length, len(self.normal_nodes - self.active_peers))
+                new_peers = random.sample(
+                    self.normal_nodes - self.active_peers, new_peer_length)
                 for p in new_peers:
                     conn = jsocket.Client()
                     conn.connect('localhost', int(p))
-                    conn.send({'type': 'YOU_ARE_PEER', 'node_id': self.node_id})
+                    conn.send(
+                        {'type': 'YOU_ARE_PEER', 'node_id': self.node_id})
                     conn.close()
                     self.active_peers.add(int(p) + 1)
-                self.active_peers_lock.release()
+            self.active_peers_lock.release()
             print constants.SUPER_PEER_TAG, self.active_peers
             print constants.SUPER_PEER_TAG, 'Selecting Peers Done'
             time.sleep(20)
+
 
 def print_msg_info(data):
     print constants.SUPER_PEER_TAG,

@@ -60,7 +60,7 @@ class NormalNode(threading.Thread):
             elif command[0] == 'download':
                 # Download the given file
                 if len(command) < 2:
-                    raise ValueError('Search string not provided')
+                    raise ValueError('Download id not provided')
                 result = None
                 try:
                     result = self._search_results[int(command[1])]
@@ -90,7 +90,7 @@ class NormalNode(threading.Thread):
                 print 'download [id]       : Download a file from the search results'
 
             else:
-                print 'Invalid command. Type help for the list of commands'
+                print 'Invalid command. Type \'help\' for the list of commands'
 
     def _listen(self):
         while True:
@@ -116,12 +116,13 @@ class NormalNode(threading.Thread):
             elif msg_type == 'SEARCH_RESULT':
                 # Save the result, and print it
                 thread.start_new_thread(self._show_result, ())
-                
+
             elif msg_type == 'DOWNLOAD':
                 # Some one wants to download one of its files
                 file_path = data['file_path']
-                thread.start_new_thread(self._send_file, (incoming_id, file_path))
-                
+                thread.start_new_thread(
+                    self._send_file, (incoming_id, file_path))
+
             elif msg_type == 'YOUR_READ_PEERS':
                 # Get the peer list and send them its file list
                 thread.start_new_thread(self._ask_peers, (incoming_id, data))
@@ -129,7 +130,7 @@ class NormalNode(threading.Thread):
             elif msg_type == 'YOUR_WRITE_PEERS':
                 # Get the peer list and send them its file list
                 thread.start_new_thread(self._send_file_list, (data,))
-                
+
             else:
                 print 'Unidentified message type {}'.format(msg_type)
 
@@ -195,7 +196,7 @@ class NormalNode(threading.Thread):
                 })
                 conn.close()
             self._search_string = None
-    
+
     def _send_file_list(self, data):
         peers = data['peers']
         print constants.NORMAL_TAG, peers
@@ -213,4 +214,3 @@ class NormalNode(threading.Thread):
                 'shared_files': file_list
             })
             conn.close()
-

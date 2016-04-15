@@ -110,6 +110,9 @@ class Server:
         else:
             print constants.SUPER_PEER_TAG, '0 sample peers'
         self.active_peers_lock.release()
+
+        conn = jsocket.Client()
+        conn.connect('localhost', inc_id)
         conn.send({
             'type': 'YOUR_WRITE_PEERS',
             'node_id': self.node_id,

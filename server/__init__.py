@@ -195,12 +195,16 @@ class Server:
                     self.normal_nodes - self.active_peers, new_peer_length)
                 print constants.SUPER_PEER_TAG, new_peer_length
                 for p in new_peers:
-                    conn = jsocket.Client()
-                    conn.connect('localhost', int(p))
-                    conn.send(
-                        {'type': 'YOU_ARE_PEER', 'node_id': self.node_id})
-                    conn.close()
-                    self.active_peers.add(int(p) + 1)
+                    try:
+                        conn = jsocket.Client()
+                        conn.connect('localhost', int(p))
+                        conn.send(
+                            {'type': 'YOU_ARE_PEER', 'node_id': self.node_id})
+                        conn.close()
+                        self.active_peers.add(int(p) + 1)
+                    except Exception as e:
+                        conn.close()
+                            
             print constants.SUPER_PEER_TAG, self.active_peers
             print constants.SUPER_PEER_TAG, 'Selecting Peers Done'
             self.normal_node_lock.release()

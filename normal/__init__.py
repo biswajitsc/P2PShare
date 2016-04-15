@@ -14,6 +14,7 @@ Threads of Normal Node
 -> Periodically refresh file list, get peer and share
 '''
 
+
 class NormalNode(threading.Thread):
     def __init__(self, id):
         self._node_id = id
@@ -22,7 +23,7 @@ class NormalNode(threading.Thread):
         self._search_results = []
         threading.Thread.__init__(self)
         print constants.NORMAL_TAG, 'Creating normal node'
-        
+
         self._conn = jsocket.Client()
 
         self._shared_folder = os.path.join('Share', str(self._node_id))

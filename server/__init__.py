@@ -43,16 +43,15 @@ class Server:
             inc_id = int(data['node_id'])
             msg_type = data['type'].strip()
 
-            
             if msg_type == 'I_AM_ONLINE':
                 if self.peer_eligible(inc_id):
                     thread.start_new_thread(self.add_normal_node, (inc_id,))
-            
+
             elif msg_type == 'GET_PEERS_WRITE':
-                thread.start_new_thread(self.get_peers_write,(inc_id,))
+                thread.start_new_thread(self.get_peers_write, (inc_id,))
 
             elif msg_type == 'GET_PEERS_READ':
-                 thread.start_new_thread(self.get_peers_read,(inc_id,))
+                thread.start_new_thread(self.get_peers_read, (inc_id,))
 
             elif msg_type == 'I_AM_PEER':
                 thread.start_new_thread(self.add_peer, (inc_id,))
@@ -71,7 +70,7 @@ class Server:
         self.normal_node_lock.acquire()
         self.normal_nodes_timestamps[inc_id] = time.time()
         self.normal_node_lock.release()
-                
+
         self.active_peers_lock.acquire()
         peer_list = []
         if len(self.active_peers) > 0:
@@ -82,19 +81,19 @@ class Server:
         else:
             print '0 sample peers'
         self.active_peers_lock.release()
-        conn.send({'type': 'YOUR_READ_PEERS','node_id': self.node_id,'peers': peer_list})
+        conn.send(
+            {'type': 'YOUR_READ_PEERS', 'node_id': self.node_id, 'peers': peer_list})
         conn.close()
         print constants.SUPER_PEER_TAG, 'exiting get_peers_read function'
-        
 
-    def get_peers_write(self,inc_id):
+    def get_peers_write(self, inc_id):
         conn = jsocket.Client()
         conn.connect('localhost', inc_id)
         print constants.SUPER_PEER_TAG, 'entered GET_PEERS_WRITE'
         self.normal_node_lock.acquire()
         self.normal_nodes_timestamps[inc_id] = time.time()
         self.normal_node_lock.release()
-                
+
         self.active_peers_lock.acquire()
         peer_list = []
         if len(self.active_peers) > 0:
@@ -105,15 +104,15 @@ class Server:
         else:
             print '0 sample peers'
         self.active_peers_lock.release()
-        conn.send({'type': 'YOUR_WRITE_PEERS','node_id': self.node_id,'peers': peer_list})
+        conn.send(
+            {'type': 'YOUR_WRITE_PEERS', 'node_id': self.node_id, 'peers': peer_list})
         conn.close()
         print constants.SUPER_PEER_TAG, 'exiting get_peers_write function'
-        
 
     def add_peer(self, inc_id):
         conn = jsocket.Client()
         conn.connect('localhost', inc_id)
-        
+
         if node_id in self.active_peers:
             conn.send({'type': 'ALREADY_PEER', 'node_id': self.node_id})
             conn.close()
@@ -133,6 +132,7 @@ class Server:
 
     def peer_eligible(self, node_id):
         if node_id > 8000 and node_id < 8050:
+
             return True
 
     def update_peer(self, node_id):
@@ -141,13 +141,12 @@ class Server:
         self.active_peers_timestamps[node_id] = time.time()
         self.active_peers_lock.release()
 
-
     def peer_heartbeat(self):
         while True:
             print constants.SUPER_PEER_TAG, 'Cleaning peer nodes'
             self.active_peers_lock.acquire()
             new_peer = {}
-            
+
             for peer_i, last_access in self.active_peers_timestamps.items():
                 if time.time() - last_access > constants.MAX_OFFLINE_TIME:
                     try:
@@ -156,7 +155,7 @@ class Server:
                         continue
                 else:
                     new_peer[peer_i] = last_access
-                    
+
             self.active_peers_timestamps = new_peer
             self.active_peers_lock.release()
             time.sleep(constants.MAX_OFFLINE_TIME)
@@ -174,7 +173,7 @@ class Server:
                         continue
                 else:
                     new_normal[normal] = last_access
-                    
+
             self.normal_nodes_timestamps = new_normal
             self.normal_node_lock.release()
             time.sleep(constants.MAX_OFFLINE_TIME)

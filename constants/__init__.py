@@ -8,6 +8,7 @@ SEARCH_WAIT = 5
 WRITE_QUORUM = 2
 BUFFER_SIZE = 1024
 
+
 def MAX_OFFLINE_TIME():
     tval = 10
     return tval  # + random.randint(0, tval)
@@ -51,6 +52,9 @@ def MAX_PEERS(num_normal_nodes):
     return min(int(math.sqrt(num_normal_nodes)), 20)
 
 NORMAL_TAG = '[NORMAL]'
-SUPER_PEER_TAG = '[SUPER_PEER]'
 PEER_TAG = '[PEER]'
 INFO_TAG = '[INFO]'
+
+
+def SUPER_PEER_TAG(node_id):
+    return '[SUPER_PEER {}]'.format(node_id)

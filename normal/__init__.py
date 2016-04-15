@@ -8,6 +8,8 @@ import thread
 import time
 import constants
 import operator
+import random
+
 
 '''
 Threads of Normal Node
@@ -25,6 +27,11 @@ class NormalNode(threading.Thread):
         self._search_string = None
         self._cur_search_id = 0
         self._search_results = []
+        ports = [constants.LOGIN_PORT1, constants.LOGIN_PORT2]
+        if random.random() >= 0.5:
+            self._default_port = ports[0]
+        else:
+            self._default_port = ports[1] 
         super(NormalNode, self).__init__()
         print constants.NORMAL_TAG, 'Creating normal node'
 
@@ -42,7 +49,15 @@ class NormalNode(threading.Thread):
         print >> self._log_file, constants.NORMAL_TAG, 'Shared folder', self._shared_folder
         self._sock = jsocket.Server('localhost', self._node_id)
 
-        conn.connect('localhost', constants.LOGIN_PORT1)
+        try:
+            conn.connect('localhost', self._default_port)
+        except Exception as e:
+            self._default_port = ports[1 - ports.index(self._default_port)]
+            try:
+                conn.connect('localhost', self._default_port)
+            except Exception as e:
+                exit(1)
+
         conn.send({
             'type': 'I_AM_ONLINE',
             'node_id': self._node_id
@@ -165,8 +180,16 @@ class NormalNode(threading.Thread):
         conn = jsocket.Client()
         while True:
             print >> self._log_file, constants.NORMAL_TAG, 'Calling _auto_get_write_peers'
+            ports = [constants.LOGIN_PORT1, constants.LOGIN_PORT2]
             conn = jsocket.Client()
-            conn.connect('localhost', constants.LOGIN_PORT1)
+            try:
+                conn.connect('localhost', self._default_port)
+            except Exception as e:
+                self._default_port = ports[1 - ports.index(self._default_port)]
+                try:
+                    conn.connect('localhost', self._default_port)
+                except Exception as e:
+                    exit(1)
             conn.send({
                 'type': 'GET_PEERS_WRITE',
                 'node_id': self._node_id
@@ -175,8 +198,16 @@ class NormalNode(threading.Thread):
             time.sleep(constants.GET_PEERS_TIMEOUT())
 
     def _get_read_peers(self):
+        ports = [constants.LOGIN_PORT1, constants.LOGIN_PORT2]
         conn = jsocket.Client()
-        conn.connect('localhost', constants.LOGIN_PORT1)
+        try:
+            conn.connect('localhost', self._default_port)
+        except Exception as e:
+            self._default_port = ports[1 - ports.index(self._default_port)]
+            try:
+                conn.connect('localhost', self._default_port)
+            except Exception as e:
+                exit(1)
         conn.send({
             'type': 'GET_PEERS_READ',
             'node_id': self._node_id

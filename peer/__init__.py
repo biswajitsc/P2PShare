@@ -77,14 +77,16 @@ class Peer(threading.Thread):
                     if (string in strng) or (strng in string):
                         count += 1
                         break
+            if count == 0:
+                continue
             ranked_list[name] = (count * 1.0) / len(query_strings)
         self.file_list_lock.release()
         sorted_tags = sorted(
             ranked_list.items(), key=operator.itemgetter(1), reverse=True)
         sorted_file_list = []
         for i in range(len(sorted_tags)):
-            sorted_file_list.append(sorted_tags[i][0])
-        msg = {'type': "SEARCH_RESULT", 'node_id': self.node_id, 'file_list': sorted_file_list}
+            sorted_file_list.append((sorted_tags[i][0][0], sorted_tags[i][0][1], sorted_tags[i][1]))
+        msg = {'type': "SEARCH_RESULT", 'node_id': self.node_id, 'file_list': sorted_file_list[:10]}
         conn.send(msg)
         conn.close()
 

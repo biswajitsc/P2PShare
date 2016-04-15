@@ -7,6 +7,7 @@ import constants
 import datetime
 import operator
 import re
+import random
 
 
 class Peer(threading.Thread):
@@ -20,15 +21,31 @@ class Peer(threading.Thread):
         print >> self._log_file, constants.PEER_TAG, 'Creating peer node'
         self.sock = jsocket.Server('localhost', self.node_id)
 
+        ports = [constants.LOGIN_PORT1, constants.LOGIN_PORT2]
+        if random.random() >= 0.5:
+            self._default_port = ports[0]
+        else:
+            self._default_port = ports[1] 
+
     def run(self):
         thread_obj = threading.Thread(target=self.garbage_collection)
         thread_obj.daemon = True
         thread_obj.start()
 
-        sock = jsocket.Client()
-        sock.connect('localhost', constants.LOGIN_PORT1)
-        sock.send({'type': 'I_AM_PEER', 'node_id': self.node_id})
-        sock.close()
+        ports = [constants.LOGIN_PORT1, constants.LOGIN_PORT2]
+
+        conn = jsocket.Client()
+        # conn.connect('localhost', constants.LOGIN_PORT1)
+        try:
+            conn.connect('localhost', self._default_port)
+        except Exception as e:
+            self._default_port = ports[1 - ports.index(self._default_port)]
+            try:
+                conn.connect('localhost', self._default_port)
+            except Exception as e:
+                exit(1)
+        conn.send({'type': 'I_AM_PEER', 'node_id': self.node_id})
+        conn.close()
 
         while True:
             conn, dummy = self.sock.accept()
@@ -127,8 +144,18 @@ class Peer(threading.Thread):
 
             self.print_file_table()
 
+            ports = [constants.LOGIN_PORT1, constants.LOGIN_PORT2]
+
             conn = jsocket.Client()
-            conn.connect('localhost', constants.LOGIN_PORT1)
+            # conn.connect('localhost', constants.LOGIN_PORT1)
+            try:
+                conn.connect('localhost', self._default_port)
+            except Exception as e:
+                self._default_port = ports[1 - ports.index(self._default_port)]
+                try:
+                    conn.connect('localhost', self._default_port)
+                except Exception as e:
+                    exit(1)
             msg = {
                 'type': 'I_AM_ALIVE',
                 'node_id': self.node_id

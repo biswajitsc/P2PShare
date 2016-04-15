@@ -8,6 +8,7 @@ import constants
 import operator
 import random
 
+
 '''
 Threads of Normal Node
 -> Input (Commands like Search and Download)
@@ -168,6 +169,7 @@ class NormalNode(threading.Thread):
         conn = jsocket.Client()
         while True:
             print >> self._log_file, constants.NORMAL_TAG, 'Calling _auto_get_write_peers'
+            ports = [constants.LOGIN_PORT1, constants.LOGIN_PORT2]
             conn = jsocket.Client()
             try:
                 conn.connect('localhost', self._default_port)
@@ -185,6 +187,7 @@ class NormalNode(threading.Thread):
             time.sleep(constants.GET_PEERS_TIMEOUT())
 
     def _get_read_peers(self):
+        ports = [constants.LOGIN_PORT1, constants.LOGIN_PORT2]
         conn = jsocket.Client()
         try:
             conn.connect('localhost', self._default_port)

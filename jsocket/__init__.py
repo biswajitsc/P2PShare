@@ -79,7 +79,9 @@ class Client(object):
     def __del__(self):
         self.close()
 
-    def connect(self, host, port):
+    def connect(self, host_port):
+        host = host_port.split(':')[0]
+        port = int(host_port.split(':')[1])
         self.socket = socket.socket()
         self.socket.connect((host, port))
         return self

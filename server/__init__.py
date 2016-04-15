@@ -11,6 +11,7 @@ import math
 class Server:
 
     def __init__(self, node_id, other_id):
+        
         self.active_peers = set()
         self.active_peers_timestamps = {}
         self.active_peers_lock = threading.Lock()
@@ -19,10 +20,14 @@ class Server:
         self.normal_nodes_timestamps = {}
         self.normal_node_lock = threading.Lock()
 
-        self.sock = jsocket.Server('localhost', node_id)
+        
         self.node_id = node_id
+        self._node_port = int(node_id.split(':')[1])
+        self._node_ip = node_id.split(':')[0]
         self.other_id = other_id
 
+        self.sock = jsocket.Server('localhost', self._node_port)
+        
     def run(self):
         print 'Server running'
 
@@ -45,7 +50,7 @@ class Server:
             self.print_msg_info(data)
             conn.close()
 
-            inc_id = int(data['node_id'])
+            inc_id = data['node_id']
             msg_type = data['type'].strip()
 
             if msg_type == 'I_AM_ONLINE':
@@ -98,7 +103,7 @@ class Server:
 
     def get_peers_read(self, inc_id):
         conn = jsocket.Client()
-        conn.connect('localhost', inc_id)
+        conn.connect(inc_id)
         print constants.SUPER_PEER_TAG(self.node_id), 'entered GET_PEERS_READ'
         self.normal_node_lock.acquire()
         self.normal_nodes_timestamps[inc_id] = time.time()
@@ -144,7 +149,8 @@ class Server:
         self.active_peers_lock.release()
 
         conn = jsocket.Client()
-        conn.connect('localhost', inc_id)
+        print inc_id
+        conn.connect(inc_id)
         conn.send({
             'type': 'YOUR_WRITE_PEERS',
             'node_id': self.node_id,
@@ -167,7 +173,9 @@ class Server:
         self.normal_node_lock.release()
 
     def peer_eligible(self, node_id):
-        if node_id > 8000 and node_id < 8050:
+        port = int(node_id.split(':')[1])
+        print constants.SUPER_PEER_TAG(self.node_id), port
+        if port > 8000 and port < 8050:
             return True
 
     def update_peer(self, node_id):
@@ -193,7 +201,7 @@ class Server:
                         continue
                 else:
                     new_peer[peer_i] = last_access
-                    self.active_peers.add(peer_i)
+                    # self.active_peers.add(peer_i)
 
             self.active_peers_timestamps = new_peer
             print constants.SUPER_PEER_TAG(self.node_id), 'Cleaning peer nodes done'
@@ -201,7 +209,7 @@ class Server:
 
             try:
                 conn = jsocket.Client()
-                conn.connect('localhost', self.other_id)
+                conn.connect(self.other_id)
                 conn.send({
                     'type': 'APT',
                     'data': new_peer
@@ -229,7 +237,7 @@ class Server:
                         continue
                 else:
                     new_normal[normal] = last_access
-                    self.normal_nodes.add(normal)
+                    # self.normal_nodes.add(normal)
 
             self.normal_nodes_timestamps = new_normal
             print constants.SUPER_PEER_TAG(self.node_id), 'Cleaning normal nodes done'
@@ -237,7 +245,7 @@ class Server:
 
             try:
                 conn = jsocket.Client()
-                conn.connect('localhost', self.other_id)
+                conn.connect(self.other_id)
                 conn.send({
                     'type': 'NNT',
                     'data': new_normal
@@ -271,13 +279,15 @@ class Server:
                 print constants.SUPER_PEER_TAG(self.node_id), new_peer_length
                 for p in new_peers:
                     try:
+                        print 'select peers',p
                         conn = jsocket.Client()
-                        conn.connect('localhost', int(p))
+                        conn.connect(p)
                         conn.send(
                             {'type': 'YOU_ARE_PEER', 'node_id': self.node_id})
                         conn.close()
-                        self.active_peers.add(int(p) + 1)
+                        # self.active_peers.add(int(p) + 1)
                     except Exception:
+                        print constants.SUPER_PEER_TAG(self.node_id), 'Exception in select peers'
                         conn.close()
 
             print constants.SUPER_PEER_TAG(self.node_id), 'Selecting Peers Done'

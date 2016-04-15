@@ -23,16 +23,22 @@ Threads of Normal Node
 class NormalNode(threading.Thread):
     def __init__(self, id):
         self._node_id = id
+        self._node_port = int(id.split(':')[1])
+        self._node_ip = id.split(':')[0]
+
         self._is_peer = False
         self._search_string = None
         self._cur_search_id = 0
         self._search_results = []
-        ports = [constants.LOGIN_PORT1, constants.LOGIN_PORT2]
+        
+        ports = [constants.LOGIN_ADD1, constants.LOGIN_ADD2]
         if random.random() >= 0.5:
             self._default_port = ports[0]
         else:
             self._default_port = ports[1] 
+        
         super(NormalNode, self).__init__()
+        
         print constants.NORMAL_TAG, 'Creating normal node'
 
         self._make_sure_exits('Log')
@@ -40,7 +46,6 @@ class NormalNode(threading.Thread):
         self._make_sure_exits(log_folder)
         self._log_file = open(os.path.join(log_folder, 'log.txt'), 'w')
 
-        conn = jsocket.Client()
         self._shared_folder = os.path.join('Share', str(self._node_id))
         self._make_sure_exits('Share')
         self._make_sure_exits(self._shared_folder)
@@ -50,14 +55,15 @@ class NormalNode(threading.Thread):
         self._make_sure_exits(self._download_folder)
 
         print >> self._log_file, constants.NORMAL_TAG, 'Shared folder', self._shared_folder
-        self._sock = jsocket.Server('localhost', self._node_id)
+        self._sock = jsocket.Server('localhost', self._node_port)
 
+        conn = jsocket.Client()
         try:
-            conn.connect('localhost', self._default_port)
+            conn.connect(self._default_port)
         except Exception as e:
             self._default_port = ports[1 - ports.index(self._default_port)]
             try:
-                conn.connect('localhost', self._default_port)
+                conn.connect(self._default_port)
             except Exception as e:
                 exit(1)
 
@@ -106,7 +112,7 @@ class NormalNode(threading.Thread):
                     print 'Invalid id'
                 print result
                 conn = jsocket.Client()
-                conn.connect('localhost', result[0])
+                conn.connect(result[0])
                 conn.send({
                     'type': 'DOWNLOAD',
                     'node_id': self._node_id,
@@ -142,7 +148,7 @@ class NormalNode(threading.Thread):
 
             print >> self._log_file, constants.NORMAL_TAG, "Data is : ",
             print >> self._log_file, data
-            incoming_id = int(data['node_id'])
+            incoming_id = data['node_id']
             msg_type = data['type']
 
             if msg_type == 'YOU_ARE_PEER':
@@ -150,7 +156,7 @@ class NormalNode(threading.Thread):
                 # Otherwise start a new thread for peer
                 if not self._is_peer:
                     self._is_peer = True
-                    self_peer = peer.Peer(self._node_id + 1)
+                    self_peer = peer.Peer(self._node_ip + ':' + str(self._node_port + 1))
                     self_peer.daemon = True
                     self_peer.start()
 
@@ -183,14 +189,14 @@ class NormalNode(threading.Thread):
         conn = jsocket.Client()
         while True:
             print >> self._log_file, constants.NORMAL_TAG, 'Calling _auto_get_write_peers'
-            ports = [constants.LOGIN_PORT1, constants.LOGIN_PORT2]
+            ports = [constants.LOGIN_ADD1, constants.LOGIN_ADD2]
             conn = jsocket.Client()
             try:
-                conn.connect('localhost', self._default_port)
+                conn.connect(self._default_port)
             except Exception as e:
                 self._default_port = ports[1 - ports.index(self._default_port)]
                 try:
-                    conn.connect('localhost', self._default_port)
+                    conn.connect(self._default_port)
                 except Exception as e:
                     exit(1)
             conn.send({
@@ -201,14 +207,14 @@ class NormalNode(threading.Thread):
             time.sleep(constants.GET_PEERS_TIMEOUT())
 
     def _get_read_peers(self):
-        ports = [constants.LOGIN_PORT1, constants.LOGIN_PORT2]
+        ports = [constants.LOGIN_ADD1, constants.LOGIN_ADD2]
         conn = jsocket.Client()
         try:
-            conn.connect('localhost', self._default_port)
+            conn.connect(self._default_port)
         except Exception as e:
             self._default_port = ports[1 - ports.index(self._default_port)]
             try:
-                conn.connect('localhost', self._default_port)
+                conn.connect(self._default_port)
             except Exception as e:
                 exit(1)
         conn.send({
@@ -246,7 +252,7 @@ class NormalNode(threading.Thread):
             peers = data['peers']
             for p in peers:
                 conn = jsocket.Client()
-                conn.connect('localhost', p)
+                conn.connect(p)
                 conn.send({
                     'type': 'SEARCH',
                     'search_id': self._cur_search_id,
@@ -267,7 +273,7 @@ class NormalNode(threading.Thread):
         for p in peers:
             try:
                 conn = jsocket.Client()
-                conn.connect('localhost', p)
+                conn.connect(p)
                 conn.send({
                     'type': 'SHARE_MY_FILES',
                     'node_id': self._node_id,

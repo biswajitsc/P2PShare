@@ -5,7 +5,7 @@ import sys
 import server
 import time
 import constants
-
+import getip
 
 def main():
     print 'Main starting'
@@ -15,14 +15,15 @@ def main():
 
     node_id = sys.argv[1]
     node_id = node_id.lower()
+    ip = getip.get_lan_ip()
 
     if node_id == 'server1':
         server_obj = server.Server(
-            constants.LOGIN_PORT1, constants.LOGIN_PORT2)
+            constants.LOGIN_ADD1, constants.LOGIN_ADD2)
         server_obj.run()
     if node_id == 'server2':
         server_obj = server.Server(
-            constants.LOGIN_PORT2, constants.LOGIN_PORT1)
+            constants.LOGIN_ADD2, constants.LOGIN_ADD1)
         server_obj.run()
     else:
         node_id = int(node_id)
@@ -30,7 +31,7 @@ def main():
             raise Exception('node_id must be an even number between\
                 8002 and 9000 inclusive.')
 
-        n_node = normal.NormalNode(node_id)
+        n_node = normal.NormalNode(str(ip)+':'+str(node_id))
         n_node.daemon = True
         n_node.start()
 

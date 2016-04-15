@@ -15,6 +15,9 @@ class Peer(threading.Thread):
     def __init__(self, id):
         super(Peer, self).__init__()
         self.node_id = id
+        self._node_port = int(id.split(':')[1])
+        self._node_ip = id.split(':')[0]
+
         self.file_list = {}
         self.file_list_lock = threading.Lock()
         self._make_sure_exits('Log')
@@ -23,9 +26,9 @@ class Peer(threading.Thread):
         self._log_file = open(os.path.join(log_folder, 'log.txt'), 'w')
 
         print >> self._log_file, constants.PEER_TAG, 'Creating peer node'
-        self.sock = jsocket.Server('localhost', self.node_id)
+        self.sock = jsocket.Server('localhost', self._node_port)
 
-        ports = [constants.LOGIN_PORT1, constants.LOGIN_PORT2]
+        ports = [constants.LOGIN_ADD1, constants.LOGIN_ADD2]
         if random.random() >= 0.5:
             self._default_port = ports[0]
         else:
@@ -36,16 +39,16 @@ class Peer(threading.Thread):
         thread_obj.daemon = True
         thread_obj.start()
 
-        ports = [constants.LOGIN_PORT1, constants.LOGIN_PORT2]
+        ports = [constants.LOGIN_ADD1, constants.LOGIN_ADD2]
 
         conn = jsocket.Client()
         # conn.connect('localhost', constants.LOGIN_PORT1)
         try:
-            conn.connect('localhost', self._default_port)
+            conn.connect(self._default_port)
         except Exception as e:
             self._default_port = ports[1 - ports.index(self._default_port)]
             try:
-                conn.connect('localhost', self._default_port)
+                conn.connect(self._default_port)
             except Exception as e:
                 exit(1)
         conn.send({'type': 'I_AM_PEER', 'node_id': self.node_id})
@@ -64,7 +67,7 @@ class Peer(threading.Thread):
             print >> self._log_file, data
 
             conn = jsocket.Client()
-            conn.connect('localhost', recv_node_id)
+            conn.connect(recv_node_id)
 
             if msg_type == "SHARE_MY_FILES":
                 # Use a mutex or a lock while accessing critical section
@@ -153,11 +156,11 @@ class Peer(threading.Thread):
             conn = jsocket.Client()
             # conn.connect('localhost', constants.LOGIN_PORT1)
             try:
-                conn.connect('localhost', self._default_port)
+                conn.connect(self._default_port)
             except Exception as e:
                 self._default_port = ports[1 - ports.index(self._default_port)]
                 try:
-                    conn.connect('localhost', self._default_port)
+                    conn.connect(self._default_port)
                 except Exception as e:
                     exit(1)
             msg = {

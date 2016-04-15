@@ -1,6 +1,10 @@
 import random
 import math
 
+LOGIN_ADD1 = 'localhost:8000'
+LOGIN_ADD2 = 'localhost:8001' 
+LOGIN_IP1 = 'localhost'
+LOGIN_IP2 = 'localhost'
 LOGIN_PORT1 = 8000
 LOGIN_PORT2 = 8001
 MAX_PEERS = 1

@@ -163,7 +163,7 @@ class Server:
                     
             self.active_peers_timestamps = new_peer
             self.active_peers_lock.release()
-            time.sleep(constants.MAX_OFFLINE_TIME)
+            time.sleep(200)
 
     def normal_heartbeat(self):
         while True:
@@ -171,7 +171,7 @@ class Server:
             self.normal_node_lock.acquire()
             new_normal = {}
             for normal, last_access in self.normal_nodes_timestamps.items():
-                if time.time() - last_access > constants.MAX_OFFLINE_TIME:
+                if time.time() - last_access > 200:
                     try:
                         self.normal_nodes.discard(normal)
                     except Exception:
@@ -181,25 +181,35 @@ class Server:
                     
             self.normal_nodes_timestamps = new_normal
             self.normal_node_lock.release()
-            time.sleep(constants.MAX_OFFLINE_TIME)
+            time.sleep(200)
 
     def select_peers(self):
         while True:
             print constants.SUPER_PEER_TAG, 'Selecting Peers'
+            
+            self.active_peers_lock.acquire()
+            self.normal_node_lock.acquire()
+            
             if len(self.active_peers) < constants.MAX_PEERS:
-                self.active_peers_lock.acquire()
                 new_peer_length = max(0, constants.MAX_PEERS - len(self.active_peers))
+                print constants.SUPER_PEER_TAG, new_peer_length
+                print constants.SUPER_PEER_TAG, self.normal_nodes
+                print constants.SUPER_PEER_TAG,self.active_peers
                 new_peer_length = min(new_peer_length, len(self.normal_nodes - self.active_peers))
                 new_peers = random.sample(self.normal_nodes - self.active_peers, new_peer_length)
+                print constants.SUPER_PEER_TAG, new_peer_length
                 for p in new_peers:
                     conn = jsocket.Client()
                     conn.connect('localhost', int(p))
                     conn.send({'type': 'YOU_ARE_PEER', 'node_id': self.node_id})
                     conn.close()
                     self.active_peers.add(int(p) + 1)
-                self.active_peers_lock.release()
+            
             print constants.SUPER_PEER_TAG, self.active_peers
             print constants.SUPER_PEER_TAG, 'Selecting Peers Done'
+            self.normal_node_lock.release()
+            self.active_peers_lock.release()    
+            
             time.sleep(20)
 
 def print_msg_info(data):

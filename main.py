@@ -28,7 +28,8 @@ def main():
         n_node.daemon = True
         n_node.start()
 
-        n_node.join()
+    while True:
+        time.sleep(120)
 
     print 'Main exiting'
 

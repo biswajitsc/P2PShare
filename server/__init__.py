@@ -11,17 +11,27 @@ import math
 class Server:
 
     def __init__(self):
-        print 'Server running'
         self.active_peers = set()
         self.active_peers_lock = threading.Lock()
+
         self.normal_nodes = set()
         self.normal_nodes_timestamps = {}
+        self.normal_node_lock = threading.Lock()
+
         self.sock = jsocket.Server('localhost', constants.LOGIN_PORT)
         self.node_id = constants.LOGIN_PORT
 
     def run(self):
-        thread.start_new_thread(self.heartbeat, ())
-        thread.start_new_thread(self.clean_normal_nodes, ())
+        print 'Server running'
+
+        _thread = threading.Thread(target=self.peer_heartbeat)
+        _thread.setDaemon(True)
+        _thread.start()
+
+        _thread = threading.Thread(target=self.normal_heartbeat)
+        _thread.setDaemon(True)
+        _thread.start()
+
         while True:
             conn, dummy = self.sock.accept()
             # print conn
@@ -38,12 +48,7 @@ class Server:
             if msg_type == 'I_AM_ONLINE':
                 if self.peer_eligible(inc_id):
                     thread.start_new_thread(
-                        self.sock.send_and_close,
-                        (conn, {
-                            'type': 'YOU_ARE_PEER',
-                            'node_id': self.node_id
-                        })
-                    )
+                        self.add_normal_node, (inc_id,))
                 else:
                     conn.close()
 
@@ -72,10 +77,6 @@ class Server:
                         'data': self.get_peers_read()
                     })
                 )
-
-            elif msg_type == 'PEER_OFFLINE':
-                thread.start_new_thread(self.peer_offline, (data['peer_id'],))
-                conn.close()
 
             elif msg_type == 'I_AM_PEER':
                 thread.start_new_thread(self.add_peer, (inc_id, conn))
@@ -127,26 +128,18 @@ class Server:
             self.active_peers.add(node_id)
             self.active_peers_lock.release()
 
-    def peer_offline(self, peer_id):
-        self.active_peers_lock.acquire()
-        self.active_peers.discard(peer_id)
-        self.active_peers_lock.release()
+    def add_normal_node(self, node_id):
+        self.normal_node_lock.acquire()
+        self.normal_nodes.add(node_id)
+        self.normal_node_lock.release()
 
     def peer_eligible(self, node_id):
-        self.active_peers_lock.acquire()
-        self.normal_nodes.add(node_id)
-        flag = False
-        if len(self.active_peers) < constants.MAX_PEERS:
-            self.active_peers.add(node_id + 1)
-            print constants.SUPER_PEER_TAG, 'Added node_id', node_id + 1
-            flag = True
-        self.active_peers_lock.release()
-        return flag
+        if node_id > 8000 and node_id < 8050:
+            return True
 
-    def heartbeat(self):
+    def peer_heartbeat(self):
         while True:
-            print constants.SUPER_PEER_TAG, 'heartbeat function'
-            sec_start = time.time()
+            print constants.SUPER_PEER_TAG, 'Sending heartbeat to peers'
             self.active_peers_lock.acquire()
             dummy_peers = self.active_peers
             for peer in dummy_peers:
@@ -178,30 +171,26 @@ class Server:
                     sock.send(
                         {'type': 'YOU_ARE_PEER', 'node_id': self.node_id})
                     sock.close()
-                    self.active_peers.add(int(p) + 1)
 
                 self.active_peers_lock.release()
 
-            time.sleep(constants.INVALIDATE_TIMEOUT)
+            time.sleep(constants.MAX_OFFLINE_TIME)
 
-    def clean_normal_nodes(self):
+    def normal_heartbeat(self):
         while True:
-            time_start = time.time()
-            print constants.SUPER_PEER_TAG, 'clean_normal_nodes function'
+            print constants.SUPER_PEER_TAG, 'Sending heartbeat to normal nodes'
             self.active_peers_lock.acquire()
             new_normal = {}
             for normal, last_access in self.normal_nodes_timestamps.items():
                 if time.time() - last_access > constants.MAX_OFFLINE_TIME:
                     try:
                         self.normal_nodes.discard(normal)
-                        self.active_peers.discard(normal + 1)
                         new_normal[normal] = last_access
-                    except Exception as e:
+                    except Exception:
                         continue
             self.normal_nodes_timestamps = new_normal
             self.active_peers_lock.release()
-            print constants.SUPER_PEER_TAG, 'exiting clean_normal_nodes function'
-            time.sleep(constants.INVALIDATE_TIMEOUT)
+            time.sleep(constants.MAX_OFFLINE_TIME)
 
 
 def print_msg_info(data):

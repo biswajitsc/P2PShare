@@ -94,6 +94,7 @@ class Server:
     def get_peers_write(self, inc_id):
         conn = jsocket.Client()
         conn.connect('localhost', inc_id)
+        print constants.SUPER_PEER_TAG, 'Write Peers asked by', inc_id
         print constants.SUPER_PEER_TAG, 'entered GET_PEERS_WRITE'
         self.normal_node_lock.acquire()
         self.normal_nodes_timestamps[inc_id] = time.time()

@@ -99,7 +99,7 @@ class Peer(threading.Thread):
 
     def garbage_collection(self):
         while(True):
-            time.sleep(constants.INVALIDATE_TIMEOUT)
+            time.sleep(constants.GARBAGE_COLLECT_TIMEOUT())
             self.file_list_lock.acquire()
             delete_files = []
             curr_time = datetime.datetime.now()

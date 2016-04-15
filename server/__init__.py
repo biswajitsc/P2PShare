@@ -132,7 +132,6 @@ class Server:
 
     def peer_eligible(self, node_id):
         if node_id > 8000 and node_id < 8050:
-
             return True
 
     def update_peer(self, node_id):

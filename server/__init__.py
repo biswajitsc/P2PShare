@@ -52,6 +52,7 @@ class Server:
                     thread.start_new_thread(self.add_normal_node, (inc_id,))
 
             elif msg_type == 'GET_PEERS_WRITE':
+                print constants.SUPER_PEER_TAG, 'Write Peers asked by', inc_id
                 thread.start_new_thread(self.get_peers_write, (inc_id,))
 
             elif msg_type == 'GET_PEERS_READ':

@@ -55,6 +55,7 @@ class NormalNode(threading.Thread):
                 if len(command) < 2:
                     raise ValueError('Search string not provided')
                 self._search_string = command[1]
+                self._get_read_peers()
 
             elif command[0] == 'download':
                 # Download the given file
@@ -114,48 +115,21 @@ class NormalNode(threading.Thread):
 
             elif msg_type == 'SEARCH_RESULT':
                 # Save the result, and print it
-                self._search_results = data['file_list']
-                print '$ Search Results'
-                for i in xrange(len(self._search_results)):
-                    print i, self._search_results[i][0], self._search_results[i][1]
-
+                thread.start_new_thread(self._show_result, ())
+                
             elif msg_type == 'DOWNLOAD':
                 # Some one wants to download one of its files
                 file_path = data['file_path']
-                with open(file_path, 'rb') as file_to_send:
-                    for line in file_to_send:
-                        conn.sendall(line)
-
+                thread.start_new_thread(self._send_file, (incoming_id, file_path))
+                
             elif msg_type == 'YOUR_READ_PEERS':
                 # Get the peer list and send them its file list
-                if self._search_string is not None:
-                    peers = data['peers']
-                    for p in peers:
-                        self._conn.connect('localhost', p)
-                        self._conn.send({
-                            'type': 'SEARCH',
-                            'node_id': self._node_id,
-                            'query': self._search_string
-                        })
-                        self._conn.close()
-                    self._search_string = None
+                thread.start_new_thread(self._ask_peers, (incoming_id, data))
 
             elif msg_type == 'YOUR_WRITE_PEERS':
                 # Get the peer list and send them its file list
-                peers = data['peers']
-                print constants.NORMAL_TAG, peers
-                file_list = []
-                for (dir_path, dir_names, file_names) in os.walk(self._shared_folder):
-                    file_list.extend(file_names)
-                for p in peers:
-                    self._conn.connect('localhost', p)
-                    self._conn.send({
-                        'type': 'SHARE_MY_FILES',
-                        'node_id': self._node_id,
-                        'shared_files': file_list
-                    })
-                    self._conn.close()
-
+                thread.start_new_thread(self._send_file_list, (data,))
+                
             else:
                 print 'Unidentified message type {}'.format(msg_type)
 
@@ -191,3 +165,48 @@ class NormalNode(threading.Thread):
         except OSError:
             if not os.path.isdir(folder):
                 raise
+
+    def _show_result(self):
+        self._search_results = data['file_list']
+        print '$ Search Results'
+        for i in xrange(len(self._search_results)):
+            print i, self._search_results[i][0], self._search_results[i][1]
+
+    def _send_file(self, node_id, file_path):
+        conn = jsocket.Client()
+        conn.connect('localhost', node_id)
+        with open(file_path, 'rb') as file_to_send:
+            for line in file_to_send:
+                conn.sendall(line)
+        conn.close()
+
+    def _ask_peers(self, data):
+        if self._search_string is not None:
+            peers = data['peers']
+            for p in peers:
+                self._conn.connect('localhost', p)
+                self._conn.send({
+                    'type': 'SEARCH',
+                    'node_id': self._node_id,
+                    'query': self._search_string
+                })
+                self._conn.close()
+            self._search_string = None
+    
+    def _send_file_list(self, data):
+        peers = data['peers']
+        print constants.NORMAL_TAG, peers
+        file_list = []
+        for (dir_path, dir_names, file_names) in os.walk(self._shared_folder):
+            file_list.extend(file_names)
+        print constants.NORMAL_TAG
+        print file_list
+        for p in peers:
+            self._conn.connect('localhost', p)
+            self._conn.send({
+                'type': 'SHARE_MY_FILES',
+                'node_id': self._node_id,
+                'shared_files': file_list
+            })
+            self._conn.close()
+

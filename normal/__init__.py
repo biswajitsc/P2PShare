@@ -35,9 +35,12 @@ class NormalNode(threading.Thread):
         super(NormalNode, self).__init__()
         print constants.NORMAL_TAG, 'Creating normal node'
 
-        self._log_file = open('log.txt', 'a')
-        conn = jsocket.Client()
+        self._make_sure_exits('Log')
+        log_folder = os.path.join('Log', str(self._node_id))
+        self._make_sure_exits(log_folder)
+        self._log_file = open(os.path.join(log_folder, 'log.txt'), 'w')
 
+        conn = jsocket.Client()
         self._shared_folder = os.path.join('Share', str(self._node_id))
         self._make_sure_exits('Share')
         self._make_sure_exits(self._shared_folder)

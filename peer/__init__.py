@@ -17,7 +17,11 @@ class Peer(threading.Thread):
         self.node_id = id
         self.file_list = {}
         self.file_list_lock = threading.Lock()
-        self._log_file = open('log.txt', 'a')
+        self._make_sure_exits('Log')
+        log_folder = os.path.join('Log', str(self.node_id))
+        self._make_sure_exits(log_folder)
+        self._log_file = open(os.path.join(log_folder, 'log.txt'), 'w')
+
         print >> self._log_file, constants.PEER_TAG, 'Creating peer node'
         self.sock = jsocket.Server('localhost', self.node_id)
 
@@ -174,3 +178,12 @@ class Peer(threading.Thread):
     def print_msg_info(self, data):
         print >> self._log_file, constants.PEER_TAG,
         print >> self._log_file, 'Recieved {} from {}.'.format(data['type'], data['node_id'])
+    
+    def _make_sure_exits(self, folder):
+        try:
+            os.makedirs(folder)
+        except OSError:
+            if not os.path.isdir(folder):
+                raise
+
+

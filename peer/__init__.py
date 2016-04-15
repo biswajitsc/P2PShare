@@ -53,17 +53,17 @@ class Peer(threading.Thread):
                 # file_list of a peer.
                 file_names = data['shared_files']
                 thread.start_new_thread(
-                    add_files, (conn, recv_node_id, file_names))
+                    self.add_files, (conn, recv_node_id, file_names))
 
             elif msg_type == "DELETE_MY_FILES":
                 file_names = data['Deleted_files']
                 thread.start_new_thread(
-                    delete_files, (conn, recv_node_id, file_names))
+                    self.delete_files, (conn, recv_node_id, file_names))
 
             elif msg_type == "SEARCH":
                 query_file_name = data['query']
                 thread.start_new_thread(
-                    search_file_list, (conn, query_file_name, recv_node_id))
+                    self.search_file_list, (conn, query_file_name, recv_node_id))
 
             else:
                 conn.close()
@@ -91,24 +91,24 @@ class Peer(threading.Thread):
         self.sock.send_and_close(conn, msg)
 
     def add_files(self, conn, node_id, file_names):
-        self.file_list_lock.aquire()
+        self.file_list_lock.acquire()
         curr_time = datetime.datetime.now()
         for i in range(len(file_names)):
             self.file_list[(node_id, file_names[i])] = curr_time
         self.file_list_lock.release()
-        print constants.PEER_TAG, " : Files Added from " + node_id + "!!"
+        print constants.PEER_TAG, " : Files Added from " + str(node_id) + "!!"
         self.print_file_table()
         # msg = {'type': 'FILES_SHARED_ACK', 'node_id' : self.node_id}
         # self.sock.send_and_close(conn, msg)
         conn.close()
 
     def delete_files(self, conn, node_id, file_names):
-        self.file_list_lock.aquire()
+        self.file_list_lock.acquire()
         for i in range(len(file_names)):
             if ((node_id, file_names[i]) in self.file_list):
                 del self.file_list[(node_id, file_names[i])]
         self.file_list_lock.release()
-        print constants.PEER_TAG, " : Files Deleted from " + node_id + "!!"
+        print constants.PEER_TAG, " : Files Deleted from " + str(node_id) + "!!"
         self.print_file_table()
         # msg = {'type': 'FILES_DELETED_ACK', 'node_id' : self.node_id}
         # self.sock.send_and_close(conn, msg)
@@ -135,10 +135,10 @@ class Peer(threading.Thread):
             self.print_file_table()
 
     def print_file_table(self):
-        print "\n+++++++++++++++++++++++++++++++++", constants.PEER_TAG, ": File Table +++++++++++++++++++++++\n"
+        print "\n+++++++++++++++++++++++++++++++++", str(constants.PEER_TAG), ": File Table +++++++++++++++++++++++\n"
         self.file_list_lock.acquire()
         for index in self.file_list:
-            print "Node Id : ", index[0], " | ", "File Name : ", index[1]
+            print "Node Id : ", str(index[0]), " | ", "File Name : ", str(index[1])
         self.file_list_lock.release()
 
 

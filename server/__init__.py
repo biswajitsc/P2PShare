@@ -53,13 +53,12 @@ class Server:
                 self.normal_nodes_timestamps[inc_id] = time.time()
                 self.active_peers_lock.release()
                 print constants.SUPER_PEER_TAG, 'calling GET_PEERS_WRITE thread'
-                write_peers = self.get_peers_write()
                 thread.start_new_thread(
                     self.sock.send_and_close,
                     (conn, {
                         'type': 'YOUR_WRITE_PEERS',
                         'node_id': self.node_id,
-                        'data': write_peers
+                        'data': self.get_peers_write()
                     })
                 )
 

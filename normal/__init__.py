@@ -125,7 +125,7 @@ class NormalNode(threading.Thread):
             elif msg_type == 'YOUR_READ_PEERS':
                 # Get the peer list and send them its file list
                 if self._search_string is not None:
-                    peers = data['peers']
+                    peers = data['data']['peers']
                     for p in peers:
                         self._conn.connect('localhost', p)
                         self._conn.send({
@@ -138,7 +138,7 @@ class NormalNode(threading.Thread):
 
             elif msg_type == 'YOUR_WRITE_PEERS':
                 # Get the peer list and send them its file list
-                peers = data['peers']
+                peers = data['data']['peers']
                 print constants.NORMAL_TAG, peers
                 file_list = []
                 for (dir_path, dir_names, file_names) in os.walk(self._shared_folder):

@@ -107,7 +107,7 @@ class Server:
             for p in sample_peers:
                 peer_list.append(p)
         else:
-            print '0 sample peers'
+            print constants.SUPER_PEER_TAG,'0 sample peers'
         self.active_peers_lock.release()
         conn.send({
             'type': 'YOUR_WRITE_PEERS',
@@ -158,7 +158,7 @@ class Server:
 
             self.active_peers_timestamps = new_peer
             self.active_peers_lock.release()
-            time.sleep(200)
+            time.sleep(constants.HEARTBEAT_TIMEOUT())
 
     def normal_heartbeat(self):
         while True:
@@ -176,7 +176,7 @@ class Server:
 
             self.normal_nodes_timestamps = new_normal
             self.normal_node_lock.release()
-            time.sleep(200)
+            time.sleep(constants.HEARTBEAT_TIMEOUT())
 
     def select_peers(self):
         while True:
@@ -196,18 +196,22 @@ class Server:
                     self.normal_nodes - self.active_peers, new_peer_length)
                 print constants.SUPER_PEER_TAG, new_peer_length
                 for p in new_peers:
-                    conn = jsocket.Client()
-                    conn.connect('localhost', int(p))
-                    conn.send(
-                        {'type': 'YOU_ARE_PEER', 'node_id': self.node_id})
-                    conn.close()
-                    self.active_peers.add(int(p) + 1)
+                    try:
+                        conn = jsocket.Client()
+                        conn.connect('localhost', int(p))
+                        conn.send(
+                            {'type': 'YOU_ARE_PEER', 'node_id': self.node_id})
+                        conn.close()
+                        self.active_peers.add(int(p) + 1)
+                    except Exception as e:
+                        conn.close()
+                            
             print constants.SUPER_PEER_TAG, self.active_peers
             print constants.SUPER_PEER_TAG, 'Selecting Peers Done'
             self.normal_node_lock.release()
             self.active_peers_lock.release()
 
-            time.sleep(20)
+            time.sleep(constants.SELECT_PEER_TIMEOUT())
 
 
 def print_msg_info(data):

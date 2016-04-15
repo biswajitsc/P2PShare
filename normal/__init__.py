@@ -64,7 +64,7 @@ class NormalNode(threading.Thread):
                 result = None
                 try:
                     result = self._search_results[int(command[1])]
-                except Exception as e:
+                except Exception:
                     print 'Invalid id'
                 self._conn.connect('localhost', result[1])
                 self._conn.send({
@@ -145,7 +145,7 @@ class NormalNode(threading.Thread):
                 'node_id': self._node_id
             })
             self._conn.close()
-            time.sleep(constants.INVALIDATE_TIMEOUT)
+            time.sleep(constants.GET_PEERS_TIMEOUT())
 
     def _get_read_peers(self):
         self._conn.connect('localhost', constants.LOGIN_PORT)

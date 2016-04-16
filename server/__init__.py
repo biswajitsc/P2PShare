@@ -228,7 +228,7 @@ class Server:
             self.normal_nodes_lock.acquire()
             new_normal = {}
             for normal, last_access in self.normal_nodes_timestamps.items():
-                print constants.SUPER_PEER_TAG(self.node_id), normal, time.time() - last_access
+                print constants.SUPER_PEER_TAG(self.node_id), normal, time.time() - last_access, last_access
                 if time.time() - last_access > constants.MAX_OFFLINE_TIME():
                     try:
                         print constants.SUPER_PEER_TAG(self.node_id), normal

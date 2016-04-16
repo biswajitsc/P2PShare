@@ -30,15 +30,15 @@ class NormalNode(threading.Thread):
         self._search_string = None
         self._cur_search_id = 0
         self._search_results = []
-        
+
         ports = [constants.LOGIN_ADD1, constants.LOGIN_ADD2]
         if random.random() >= 0.5:
             self._default_port = ports[0]
         else:
-            self._default_port = ports[1] 
-        
+            self._default_port = ports[1]
+
         super(NormalNode, self).__init__()
-        
+
         print constants.NORMAL_TAG, 'Creating normal node'
 
         self._make_sure_exits('Log')
@@ -79,7 +79,11 @@ class NormalNode(threading.Thread):
         thread.start_new_thread(self._auto_get_write_peers, ())
         while True:
             print '$',
-            command = raw_input().strip().split()
+            try:
+                command = raw_input().strip().split()
+            except:
+                command = 'empty'
+                time.sleep(10)
             if command[0] == 'search':
                 # Send file to peers, wait for response
                 if len(command) < 2:
@@ -96,7 +100,8 @@ class NormalNode(threading.Thread):
                     sys.stdout.flush()
                     time.sleep(1)
                 print
-                self._search_results = sorted(self._search_results, key = operator.itemgetter(2), reverse = True)[:10]
+                self._search_results = sorted(
+                    self._search_results, key=operator.itemgetter(2), reverse=True)[:10]
                 print 'Search Result:'
                 for i in range(len(self._search_results)):
                     print i, self._search_results[i][1], self._search_results[i][0]
@@ -133,7 +138,8 @@ class NormalNode(threading.Thread):
             elif command[0] == 'help':
                 print 'search   [filename] : Search for a file'
                 print 'download [id]       : Download a file from the search results'
-
+            elif command[0] == 'empty':
+                pass
             else:
                 print 'Invalid command. Type \'help\' for the list of commands'
 
@@ -156,7 +162,8 @@ class NormalNode(threading.Thread):
                 # Otherwise start a new thread for peer
                 if not self._is_peer:
                     self._is_peer = True
-                    self_peer = peer.Peer(self._node_ip + ':' + str(self._node_port + 1))
+                    self_peer = peer.Peer(
+                        self._node_ip + ':' + str(self._node_port + 1))
                     self_peer.daemon = True
                     self_peer.start()
 
@@ -166,7 +173,8 @@ class NormalNode(threading.Thread):
 
             elif msg_type == 'DOWNLOAD':
                 # Some one wants to download one of its files
-                file_path = os.path.join(self._shared_folder, data['file_path'])
+                file_path = os.path.join(
+                    self._shared_folder, data['file_path'])
                 thread.start_new_thread(
                     self._send_file, (conn, incoming_id, file_path))
 
@@ -179,11 +187,12 @@ class NormalNode(threading.Thread):
                 thread.start_new_thread(self._send_file_list, (data,))
 
             else:
-                print >> self._log_file, 'Unidentified message type {}'.format(msg_type)
-            
+                print >> self._log_file, 'Unidentified message type {}'.format(
+                    msg_type)
+
             if msg_type != 'DOWNLOAD':
                 conn.close()
-            
+
     def _auto_get_write_peers(self):
         # time.sleep(1)
         conn = jsocket.Client()
@@ -225,7 +234,8 @@ class NormalNode(threading.Thread):
 
     def _print_msg_info(self, data):
         print >> self._log_file, constants.NORMAL_TAG,
-        print >> self._log_file, 'Recieved {} from {}.'.format(data['type'], data['node_id'])
+        print >> self._log_file, 'Recieved {} from {}.'.format(
+            data['type'], data['node_id'])
 
     def _make_sure_exits(self, folder):
         try:
@@ -251,15 +261,20 @@ class NormalNode(threading.Thread):
         if self._search_string is not None:
             peers = data['peers']
             for p in peers:
-                conn = jsocket.Client()
-                conn.connect(p)
-                conn.send({
-                    'type': 'SEARCH',
-                    'search_id': self._cur_search_id,
-                    'node_id': self._node_id,
-                    'query': self._search_string
-                })
-                conn.close()
+                try:
+                    print 'Trying', p
+                    conn = jsocket.Client()
+                    conn.connect(p)
+                    conn.send({
+                        'type': 'SEARCH',
+                        'search_id': self._cur_search_id,
+                        'node_id': self._node_id,
+                        'query': self._search_string
+                    })
+                    conn.close()
+                except:
+                    print p, 'Unreachable'
+                    pass
             self._search_string = None
 
     def _send_file_list(self, data):

@@ -16,7 +16,7 @@ BUFFER_SIZE = 1024
 
 
 def MAX_OFFLINE_TIME():
-    tval = 10
+    tval = 30
     return tval  # + random.randint(0, tval)
 
 

@@ -212,6 +212,7 @@ class Server:
                 conn.connect(self.other_id)
                 conn.send({
                     'type': 'APT',
+                    'node_id': self.node_id,
                     'data': new_peer
                 })
                 conn.close()
@@ -249,6 +250,7 @@ class Server:
                 conn.connect(self.other_id)
                 conn.send({
                     'type': 'NNT',
+                    'node_id': self.node_id,
                     'data': new_normal
                 })
                 conn.close()

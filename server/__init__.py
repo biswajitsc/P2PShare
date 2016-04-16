@@ -26,7 +26,7 @@ class Server:
         self._node_ip = node_id.split(':')[0]
         self.other_id = other_id
 
-        self.sock = jsocket.Server('localhost', self._node_port)
+        self.sock = jsocket.Server(self._node_ip, self._node_port)
         
     def run(self):
         print 'Server running'

@@ -55,7 +55,7 @@ class NormalNode(threading.Thread):
         self._make_sure_exits(self._download_folder)
 
         print >> self._log_file, constants.NORMAL_TAG, 'Shared folder', self._shared_folder
-        self._sock = jsocket.Server('localhost', self._node_port)
+        self._sock = jsocket.Server(self._node_ip, self._node_port)
 
         conn = jsocket.Client()
         try:

@@ -262,7 +262,6 @@ class NormalNode(threading.Thread):
             peers = data['peers']
             for p in peers:
                 try:
-                    print 'Trying', p
                     conn = jsocket.Client()
                     conn.connect(p)
                     conn.send({
@@ -273,7 +272,6 @@ class NormalNode(threading.Thread):
                     })
                     conn.close()
                 except:
-                    print p, 'Unreachable'
                     pass
             self._search_string = None
 

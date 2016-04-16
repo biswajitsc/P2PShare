@@ -4,8 +4,8 @@ import main_test
 import random
 import time
 
-cnt = 8046
-while cnt <= 8060:
+cnt = 8040
+while cnt <= 8066:
     thread.start_new_thread(main_test.main, (cnt,))
     time.sleep(10 + random.randint(-5, 5))
 
@@ -19,4 +19,4 @@ while cnt <= 8060:
 
     cnt += 2
 
-time.sleep(100)
+time.sleep(200)

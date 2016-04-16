@@ -32,7 +32,7 @@ class Peer(threading.Thread):
         if random.random() >= 0.5:
             self._default_port = ports[0]
         else:
-            self._default_port = ports[1] 
+            self._default_port = ports[1]
 
     def run(self):
         thread_obj = threading.Thread(target=self.garbage_collection)
@@ -42,7 +42,6 @@ class Peer(threading.Thread):
         ports = [constants.LOGIN_ADD1, constants.LOGIN_ADD2]
 
         conn = jsocket.Client()
-        # conn.connect('localhost', constants.LOGIN_PORT1)
         try:
             conn.connect(self._default_port)
         except Exception as e:
@@ -110,8 +109,10 @@ class Peer(threading.Thread):
             ranked_list.items(), key=operator.itemgetter(1), reverse=True)
         sorted_file_list = []
         for i in range(len(sorted_tags)):
-            sorted_file_list.append((sorted_tags[i][0][0], sorted_tags[i][0][1], sorted_tags[i][1]))
-        msg = {'type': "SEARCH_RESULT", 'node_id': self.node_id, 'file_list': sorted_file_list[:10], 'search_id' : search_id}
+            sorted_file_list.append(
+                (sorted_tags[i][0][0], sorted_tags[i][0][1], sorted_tags[i][1]))
+        msg = {'type': "SEARCH_RESULT", 'node_id': self.node_id,
+               'file_list': sorted_file_list[:10], 'search_id': search_id}
         conn.send(msg)
         conn.close()
 
@@ -121,7 +122,8 @@ class Peer(threading.Thread):
         for i in range(len(file_names)):
             self.file_list[(node_id, file_names[i])] = curr_time
         self.file_list_lock.release()
-        print >> self._log_file, constants.PEER_TAG, " : Files Added from " + str(node_id) + "!!"
+        print >> self._log_file, constants.PEER_TAG, " : Files Added from " + \
+            str(node_id) + "!!"
         self.print_file_table()
         # msg = {'type': 'FILES_SHARED_ACK', 'node_id' : self.node_id}
         # self.sock.send_and_close(conn, msg)
@@ -133,28 +135,28 @@ class Peer(threading.Thread):
             self.file_list_lock.acquire()
             delete_files = []
             curr_time = datetime.datetime.now()
-            
+
             for index in self.file_list:
-                time_difference =  curr_time - self.file_list[index]
+                time_difference = curr_time - self.file_list[index]
                 if time_difference.total_seconds() >= constants.FILE_INVALIDATE_TIMEOUT():
                     delete_files.append(index)
 
             for index in delete_files:
                 del self.file_list[index]
-            
+
             print >> self._log_file, constants.PEER_TAG, " : Garbage Collection Performed!!"
             self.file_list_lock.release()
-            
+
             print >> self._log_file, "\n-------------------- Files to be deleted --------------------------\n"
             for index in delete_files:
-                print >> self._log_file, "Node Id : ", index[0], "File Name : ", index[1]
+                print >> self._log_file, "Node Id : ", index[
+                    0], "File Name : ", index[1]
 
             self.print_file_table()
 
-            ports = [constants.LOGIN_PORT1, constants.LOGIN_PORT2]
+            ports = [constants.LOGIN_ADD1, constants.LOGIN_ADD2]
 
             conn = jsocket.Client()
-            # conn.connect('localhost', constants.LOGIN_PORT1)
             try:
                 conn.connect(self._default_port)
             except Exception as e:
@@ -171,22 +173,22 @@ class Peer(threading.Thread):
             conn.close()
 
     def print_file_table(self):
-        print >> self._log_file, "\n+++++++++++++++++++++++++++++++++", str(constants.PEER_TAG), ": File Table +++++++++++++++++++++++\n"
+        print >> self._log_file, "\n+++++++++++++++++++++++++++++++++", str(
+            constants.PEER_TAG), ": File Table +++++++++++++++++++++++\n"
         self.file_list_lock.acquire()
         for index in self.file_list:
-            print >> self._log_file, "Node Id : ", str(index[0]), " | ", "File Name : ", str(index[1])
+            print >> self._log_file, "Node Id : ", str(
+                index[0]), " | ", "File Name : ", str(index[1])
         self.file_list_lock.release()
-
 
     def print_msg_info(self, data):
         print >> self._log_file, constants.PEER_TAG,
-        print >> self._log_file, 'Recieved {} from {}.'.format(data['type'], data['node_id'])
-    
+        print >> self._log_file, 'Recieved {} from {}.'.format(
+            data['type'], data['node_id'])
+
     def _make_sure_exits(self, folder):
         try:
             os.makedirs(folder)
         except OSError:
             if not os.path.isdir(folder):
                 raise
-
-

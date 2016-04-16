@@ -26,7 +26,7 @@ class Server:
         self.other_id = other_id
 
         self.sock = jsocket.Server(self._node_ip, self._node_port)
-        
+
     def run(self):
         print 'Server running'
 
@@ -83,21 +83,23 @@ class Server:
 
     def sync_listener_thread(self, data, mode):
         print constants.SUPER_PEER_TAG(self.node_id), 'Syncing state'
-        if mode == 'AP':
-            self.active_peers_lock.acquire()
-            self.active_peers = data
-            self.active_peers_lock.release()
         if mode == 'APT':
             self.active_peers_lock.acquire()
-            self.active_peers_timestamps = data
+            for peer, timestamp in data.items():
+                if peer not in self.active_peers_timestamps.keys():
+                    self.active_peers_timestamps[peer] = timestamp
+                else:
+                    self.active_peers_timestamps[peer] = max(
+                        self.active_peers_timestamps[peer], timestamp)
             self.active_peers_lock.release()
-        if mode == 'NN':
-            self.normal_nodes_lock.acquire()
-            self.normal_nodes = data
-            self.normal_nodes_lock.release()
         if mode == 'NNT':
             self.normal_nodes_lock.acquire()
-            self.normal_nodes_timestamps = data
+            for normal, timestamp in data.items():
+                if normal not in self.normal_nodes_timestamps.keys():
+                    self.normal_nodes_timestamps[normal] = timestamp
+                else:
+                    self.normal_nodes_timestamps[normal] = max(
+                        self.normal_nodes_timestamps[normal], timestamp)
             self.normal_nodes_lock.release()
 
     def get_peers_read(self, inc_id):
@@ -228,7 +230,7 @@ class Server:
             self.normal_nodes_lock.acquire()
             new_normal = {}
             for normal, last_access in self.normal_nodes_timestamps.items():
-                print constants.SUPER_PEER_TAG(self.node_id), normal, time.time() - last_access
+                print constants.SUPER_PEER_TAG(self.node_id), normal, time.time() - last_access, last_access
                 if time.time() - last_access > constants.MAX_OFFLINE_TIME():
                     try:
                         print constants.SUPER_PEER_TAG(self.node_id), normal

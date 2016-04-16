@@ -17,7 +17,7 @@ def main(node_id):
         raise Exception('node_id must be an even number between\
             8002 and 9000 inclusive.')
 
-    n_node = normal.NormalNode(str(ip) + ':' + str(node_id))
+    n_node = normal.NormalNode(str(ip) + ':' + str(node_id), multimode=True)
     n_node.daemon = True
     n_node.start()
 

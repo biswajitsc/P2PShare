@@ -117,7 +117,7 @@ class Server:
             # self.active_peers, int(math.floor(len(self.active_peers) / 2)) +
             # 1)
             sample_peers = random.sample(
-                self.active_peers, constants.GET_PEER_WRITE_SIZE(len(self.active_peers)))
+                self.active_peers, constants.GET_PEER_READ_SIZE(len(self.active_peers)))
             for p in sample_peers:
                 peer_list.append(p)
         else:
@@ -142,7 +142,7 @@ class Server:
             # self.active_peers, int(math.floor(len(self.active_peers) / 2)) +
             # 1)
             sample_peers = random.sample(
-                self.active_peers, constants.GET_PEER_READ_SIZE(len(self.active_peers)))
+                self.active_peers, constants.GET_PEER_WRITE_SIZE(len(self.active_peers)))
             for p in sample_peers:
                 peer_list.append(p)
         else:

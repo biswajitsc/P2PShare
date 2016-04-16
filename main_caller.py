@@ -19,4 +19,4 @@ while cnt <= 8060:
 
     cnt += 2
 
-time.sleep(200)
+time.sleep(100)

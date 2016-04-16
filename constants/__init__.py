@@ -1,15 +1,16 @@
 import random
 import math
+import datetime
 
-LOGIN_ADD1 = '10.145.14.209:8000'
-LOGIN_ADD2 = '10.146.24.166:8001'
-# LOGIN_ADD1 = 'localhost:8000'
-# LOGIN_ADD2 = 'localhost:8001'
+# LOGIN_ADD1 = '10.145.14.209:8000'
+# LOGIN_ADD2 = '10.146.24.166:8001'
+LOGIN_ADD1 = 'localhost:8000'
+LOGIN_ADD2 = 'localhost:8001'
 # LOGIN_IP1 = 'localhost'
 # LOGIN_IP2 = 'localhost'
 # LOGIN_PORT1 = 8000
 # LOGIN_PORT2 = 8001
-MAX_PEERS = 1
+# MAX_PEERS = 1
 SEARCH_WAIT = 5
 WRITE_QUORUM = 2
 BUFFER_SIZE = 1024
@@ -63,4 +64,4 @@ INFO_TAG = '[INFO]'
 
 
 def SUPER_PEER_TAG(node_id):
-    return '[SUPER_PEER {}]'.format(node_id)
+    return str(datetime.datetime.now()) + ' [SUPER_PEER {}]'.format(node_id)

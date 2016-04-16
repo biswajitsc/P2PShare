@@ -55,6 +55,7 @@ class NormalNode(threading.Thread):
         self._make_sure_exits('Download')
         self._make_sure_exits(self._download_folder)
 
+        print constants.NORMAL_TAG, " Default Super Peer : ", self._default_port  
         print >> self._log_file, constants.NORMAL_TAG, 'Shared folder', self._shared_folder
         self._sock = jsocket.Server(self._node_ip, self._node_port)
 
@@ -63,8 +64,10 @@ class NormalNode(threading.Thread):
             conn.connect(self._default_port)
         except Exception as e:
             self._default_port = ports[1 - ports.index(self._default_port)]
+            print >> self._log_file, constants.NORMAL_TAG, ": Default Super Peer unreachable."
             try:
                 conn.connect(self._default_port)
+                print >> self._log_file, constants.NORMAL_TAG, " Connected with Updated Default Super Peer : ", self._default_port  
             except Exception:
                 exit(1)
 
@@ -208,8 +211,10 @@ class NormalNode(threading.Thread):
                 conn.connect(self._default_port)
             except Exception as e:
                 self._default_port = ports[1 - ports.index(self._default_port)]
+                print >> self._log_file, constants.NORMAL_TAG, ": Default Super Peer unreachable."
                 try:
                     conn.connect(self._default_port)
+                    print >> self._log_file, constants.NORMAL_TAG, " Connected with Updated Default Super Peer : ", self._default_port  
                 except Exception as e:
                     exit(1)
             conn.send({
@@ -226,8 +231,10 @@ class NormalNode(threading.Thread):
             conn.connect(self._default_port)
         except Exception as e:
             self._default_port = ports[1 - ports.index(self._default_port)]
+            print >> self._log_file, constants.NORMAL_TAG, ": Default Super Peer unreachable."
             try:
                 conn.connect(self._default_port)
+                print >> self._log_file, constants.NORMAL_TAG, " Connected with Updated Default Super Peer : ", self._default_port  
             except Exception as e:
                 exit(1)
         conn.send({

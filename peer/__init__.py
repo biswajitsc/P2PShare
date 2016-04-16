@@ -34,6 +34,8 @@ class Peer(threading.Thread):
         else:
             self._default_port = ports[1]
 
+        print >> self._log_file, constants.PEER_TAG, " Default Super Peer : ", self._default_port  
+
     def run(self):
         thread_obj = threading.Thread(target=self.garbage_collection)
         thread_obj.daemon = True
@@ -46,8 +48,10 @@ class Peer(threading.Thread):
             conn.connect(self._default_port)
         except Exception as e:
             self._default_port = ports[1 - ports.index(self._default_port)]
+            print >> self._log_file, constants.PEER_TAG, ": Default Super Peer unreachable."
             try:
                 conn.connect(self._default_port)
+                print >> self._log_file, constants.PEER_TAG, " Connected with Updated Default Super Peer : ", self._default_port  
             except Exception as e:
                 exit(1)
         conn.send({'type': 'I_AM_PEER', 'node_id': self.node_id})
@@ -161,8 +165,10 @@ class Peer(threading.Thread):
                 conn.connect(self._default_port)
             except Exception as e:
                 self._default_port = ports[1 - ports.index(self._default_port)]
+                print >> self._log_file, constants.PEER_TAG, ": Default Super Peer unreachable."
                 try:
                     conn.connect(self._default_port)
+                    print >> self._log_file, constants.PEER_TAG, " Connected with Updated Default Super Peer : ", self._default_port  
                 except Exception as e:
                     exit(1)
             msg = {

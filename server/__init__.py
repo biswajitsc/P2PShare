@@ -28,7 +28,7 @@ class Server:
         self.sock = jsocket.Server(self._node_ip, self._node_port)
 
     def run(self):
-        print 'Server running'
+        print constants.SUPER_PEER_TAG(self.node_id), 'Server running'
 
         thread_obj = threading.Thread(target=self.peer_heartbeat)
         thread_obj.setDaemon(True)
@@ -57,7 +57,6 @@ class Server:
                     thread.start_new_thread(self.add_normal_node, (inc_id,))
 
             elif msg_type == 'GET_PEERS_WRITE':
-                print constants.SUPER_PEER_TAG(self.node_id), 'Write Peers asked by', inc_id
                 thread.start_new_thread(self.get_peers_write, (inc_id,))
 
             elif msg_type == 'GET_PEERS_READ':
@@ -105,32 +104,8 @@ class Server:
     def get_peers_read(self, inc_id):
         conn = jsocket.Client()
         conn.connect(inc_id)
-        print constants.SUPER_PEER_TAG(self.node_id), 'entered GET_PEERS_READ'
-        self.normal_nodes_lock.acquire()
-        self.normal_nodes_timestamps[inc_id] = time.time()
-        self.normal_nodes_lock.release()
-
-        self.active_peers_lock.acquire()
-        peer_list = []
-        if len(self.active_peers) > 0:
-            # sample_peers = random.sample(
-            # self.active_peers, int(math.floor(len(self.active_peers) / 2)) +
-            # 1)
-            sample_peers = random.sample(
-                self.active_peers, constants.GET_PEER_WRITE_SIZE(len(self.active_peers)))
-            for p in sample_peers:
-                peer_list.append(p)
-        else:
-            print '0 sample peers'
-        self.active_peers_lock.release()
-        conn.send(
-            {'type': 'YOUR_READ_PEERS', 'node_id': self.node_id, 'peers': peer_list})
-        conn.close()
-        print constants.SUPER_PEER_TAG(self.node_id), 'exiting get_peers_read function'
-
-    def get_peers_write(self, inc_id):
-        print constants.SUPER_PEER_TAG(self.node_id), 'Write Peers asked by', inc_id
-        print constants.SUPER_PEER_TAG(self.node_id), 'entered GET_PEERS_WRITE'
+        print constants.SUPER_PEER_TAG(self.node_id), 'Read Peers asked by', inc_id
+        # print constants.SUPER_PEER_TAG(self.node_id), 'entered GET_PEERS_READ'
         self.normal_nodes_lock.acquire()
         self.normal_nodes_timestamps[inc_id] = time.time()
         self.normal_nodes_lock.release()
@@ -146,11 +121,37 @@ class Server:
             for p in sample_peers:
                 peer_list.append(p)
         else:
-            print constants.SUPER_PEER_TAG(self.node_id), '0 sample peers'
+            print constants.SUPER_PEER_TAG(self.node_id), 'No eligible read peers found'
+            # print '0 sample peers'
+        self.active_peers_lock.release()
+        conn.send(
+            {'type': 'YOUR_READ_PEERS', 'node_id': self.node_id, 'peers': peer_list})
+        conn.close()
+        print constants.SUPER_PEER_TAG(self.node_id), 'exiting get_peers_read function'
+
+    def get_peers_write(self, inc_id):
+        print constants.SUPER_PEER_TAG(self.node_id), 'Write Peers asked by', inc_id
+        # print constants.SUPER_PEER_TAG(self.node_id), 'entered GET_PEERS_WRITE'
+        self.normal_nodes_lock.acquire()
+        self.normal_nodes_timestamps[inc_id] = time.time()
+        self.normal_nodes_lock.release()
+
+        self.active_peers_lock.acquire()
+        peer_list = []
+        if len(self.active_peers) > 0:
+            # sample_peers = random.sample(
+            # self.active_peers, int(math.floor(len(self.active_peers) / 2)) +
+            # 1)
+            sample_peers = random.sample(
+                self.active_peers, constants.GET_PEER_WRITE_SIZE(len(self.active_peers)))
+            for p in sample_peers:
+                peer_list.append(p)
+        else:
+            print constants.SUPER_PEER_TAG(self.node_id), 'No eligible write peers found'
         self.active_peers_lock.release()
 
         conn = jsocket.Client()
-        print inc_id
+        # print inc_id
         conn.connect(inc_id)
         conn.send({
             'type': 'YOUR_WRITE_PEERS',
@@ -158,7 +159,7 @@ class Server:
             'peers': peer_list
         })
         conn.close()
-        print constants.SUPER_PEER_TAG(self.node_id), 'exiting get_peers_write function'
+        # print constants.SUPER_PEER_TAG(self.node_id), 'exiting get_peers_write function'
 
     def add_peer(self, inc_id):
         if inc_id not in self.active_peers:
@@ -188,16 +189,16 @@ class Server:
     def peer_heartbeat(self):
         while True:
             print constants.SUPER_PEER_TAG(self.node_id), 'Cleaning peer nodes'
-            print constants.SUPER_PEER_TAG(self.node_id), self.active_peers
+            print constants.SUPER_PEER_TAG(self.node_id), 'Current peer list : ', self.active_peers
             self.active_peers_lock.acquire()
             new_peer = {}
 
             for peer_i, last_access in self.active_peers_timestamps.items():
-                print peer_i, time.time() - last_access
+                print constants.SUPER_PEER_TAG(self.node_id), "Peer ", peer_i, " is unreachable for ", time.time() - last_access
                 if time.time() - last_access > constants.MAX_OFFLINE_TIME():
                     try:
                         self.active_peers.discard(peer_i)
-                        print peer_i
+                        print constants.SUPER_PEER_TAG(self.node_id), peer_i, "discarded"
                     except Exception:
                         continue
                 else:
@@ -206,7 +207,7 @@ class Server:
 
             self.active_peers_timestamps = new_peer
             print constants.SUPER_PEER_TAG(self.node_id), 'Cleaning peer nodes done'
-            print constants.SUPER_PEER_TAG(self.node_id), self.active_peers
+            print constants.SUPER_PEER_TAG(self.node_id), 'Cleaned peer list : ', self.active_peers
 
             try:
                 conn = jsocket.Client()
@@ -226,11 +227,11 @@ class Server:
     def normal_heartbeat(self):
         while True:
             print constants.SUPER_PEER_TAG(self.node_id), 'Cleaning normal nodes'
-            print constants.SUPER_PEER_TAG(self.node_id), self.normal_nodes
+            print constants.SUPER_PEER_TAG(self.node_id), 'Current normal node list : ', self.normal_nodes
             self.normal_nodes_lock.acquire()
             new_normal = {}
             for normal, last_access in self.normal_nodes_timestamps.items():
-                print constants.SUPER_PEER_TAG(self.node_id), normal, time.time() - last_access, last_access
+                print constants.SUPER_PEER_TAG(self.node_id), "Normal node ", normal, "is unreachable for ", time.time() - last_access
                 if time.time() - last_access > constants.MAX_OFFLINE_TIME():
                     try:
                         print constants.SUPER_PEER_TAG(self.node_id), normal
@@ -244,7 +245,7 @@ class Server:
 
             self.normal_nodes_timestamps = new_normal
             print constants.SUPER_PEER_TAG(self.node_id), 'Cleaning normal nodes done'
-            print constants.SUPER_PEER_TAG(self.node_id), self.normal_nodes
+            print constants.SUPER_PEER_TAG(self.node_id), 'Cleaned normal node list : ', self.normal_nodes
 
             try:
                 conn = jsocket.Client()
@@ -267,8 +268,8 @@ class Server:
             self.active_peers_lock.acquire()
             self.normal_nodes_lock.acquire()
 
-            print constants.SUPER_PEER_TAG(self.node_id), self.active_peers
-            print constants.SUPER_PEER_TAG(self.node_id), self.normal_nodes
+            print constants.SUPER_PEER_TAG(self.node_id), 'Current peer list : ', self.active_peers
+            print constants.SUPER_PEER_TAG(self.node_id), 'Current normal node list : ', self.normal_nodes
 
             if len(self.active_peers) < constants.MAX_PEERS(len(self.normal_nodes)):
                 new_peer_length = max(
@@ -283,7 +284,7 @@ class Server:
                 print constants.SUPER_PEER_TAG(self.node_id), new_peer_length
                 for p in new_peers:
                     try:
-                        print 'select peers', p
+                        print constants.SUPER_PEER_TAG(self.node_id), 'selecting peer : ', p
                         conn = jsocket.Client()
                         conn.connect(p)
                         conn.send(
@@ -291,11 +292,11 @@ class Server:
                         conn.close()
                         # self.active_peers.add(int(p) + 1)
                     except Exception:
-                        print constants.SUPER_PEER_TAG(self.node_id), 'Exception in select peers'
+                        print constants.SUPER_PEER_TAG(self.node_id), 'peer ', p, 'is down'
                         conn.close()
 
             print constants.SUPER_PEER_TAG(self.node_id), 'Selecting Peers Done'
-            print constants.SUPER_PEER_TAG(self.node_id), self.active_peers
+            print constants.SUPER_PEER_TAG(self.node_id), 'New peer list : ', self.active_peers
             self.normal_nodes_lock.release()
             self.active_peers_lock.release()
 

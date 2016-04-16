@@ -11,7 +11,7 @@ import math
 class Server:
 
     def __init__(self, node_id, other_id):
-        
+
         self.active_peers = set()
         self.active_peers_timestamps = {}
         self.active_peers_lock = threading.Lock()
@@ -20,14 +20,13 @@ class Server:
         self.normal_nodes_timestamps = {}
         self.normal_node_lock = threading.Lock()
 
-        
         self.node_id = node_id
         self._node_port = int(node_id.split(':')[1])
         self._node_ip = node_id.split(':')[0]
         self.other_id = other_id
 
         self.sock = jsocket.Server('localhost', self._node_port)
-        
+
     def run(self):
         print 'Server running'
 
@@ -280,7 +279,7 @@ class Server:
                 print constants.SUPER_PEER_TAG(self.node_id), new_peer_length
                 for p in new_peers:
                     try:
-                        print 'select peers',p
+                        print 'select peers', p
                         conn = jsocket.Client()
                         conn.connect(p)
                         conn.send(
@@ -297,7 +296,6 @@ class Server:
             self.active_peers_lock.release()
 
             time.sleep(constants.SELECT_PEER_TIMEOUT())
-
 
     def print_msg_info(self, data):
         print constants.SUPER_PEER_TAG(self.node_id),

@@ -9,7 +9,7 @@ def get_interface_ip(ifname):
                             ifname[:15]))[20:24])
 
 def get_lan_ip():
-    # return 'localhost'
+    return 'localhost'
     ip = socket.gethostbyname(socket.gethostname())
     if ip.startswith("127.") and os.name != "nt":
         interfaces = [

@@ -7,13 +7,16 @@ import time
 import constants
 import getip
 
-def main():
-    print 'Main starting'
-    if len(sys.argv) < 2:
-        print '[ERROR] Please provide Node ID'
-        exit(0)
+print 'Main starting'
+if len(sys.argv) < 2:
+    print '[ERROR] Please provide Node ID'
+    exit(0)
 
-    node_id = sys.argv[1]
+node_id = sys.argv[1]
+
+
+def main(node_id):
+
     node_id = node_id.lower()
     ip = getip.get_lan_ip()
 
@@ -31,7 +34,7 @@ def main():
             raise Exception('node_id must be an even number between\
                 8002 and 9000 inclusive.')
 
-        n_node = normal.NormalNode(str(ip)+':'+str(node_id))
+        n_node = normal.NormalNode(str(ip) + ':' + str(node_id))
         n_node.daemon = True
         n_node.start()
 
@@ -42,4 +45,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(node_id)

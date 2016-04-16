@@ -18,7 +18,7 @@ class Server:
 
         self.normal_nodes = set()
         self.normal_nodes_timestamps = {}
-        self.normal_node_lock = threading.Lock()
+        self.normal_nodes_lock = threading.Lock()
 
         self.node_id = node_id
         self._node_port = int(node_id.split(':')[1])
@@ -71,11 +71,11 @@ class Server:
 
             elif msg_type == 'APT':
                 thread.start_new_thread(
-                    self.sync_thread, (data['data'], 'APT'))
+                    self.sync_listener_thread, (data['data'], 'APT'))
 
             elif msg_type == 'NNT':
                 thread.start_new_thread(
-                    self.sync_thread, (data['data'], 'NNT'))
+                    self.sync_listener_thread, (data['data'], 'NNT'))
 
             else:
                 print 'Unidentified message type {}'.format(msg_type)
@@ -85,28 +85,28 @@ class Server:
         print constants.SUPER_PEER_TAG(self.node_id), 'Syncing state'
         if mode == 'AP':
             self.active_peers_lock.acquire()
-            self.active_peers = set(data)
+            self.active_peers = data
             self.active_peers_lock.release()
         if mode == 'APT':
             self.active_peers_lock.acquire()
-            self.active_peers_timestamps = set(data)
+            self.active_peers_timestamps = data
             self.active_peers_lock.release()
         if mode == 'NN':
             self.normal_nodes_lock.acquire()
-            self.normal_nodes = set(data)
+            self.normal_nodes = data
             self.normal_nodes_lock.release()
         if mode == 'NNT':
             self.normal_nodes_lock.acquire()
-            self.normal_nodes_timestamps = set(data)
+            self.normal_nodes_timestamps = data
             self.normal_nodes_lock.release()
 
     def get_peers_read(self, inc_id):
         conn = jsocket.Client()
         conn.connect(inc_id)
         print constants.SUPER_PEER_TAG(self.node_id), 'entered GET_PEERS_READ'
-        self.normal_node_lock.acquire()
+        self.normal_nodes_lock.acquire()
         self.normal_nodes_timestamps[inc_id] = time.time()
-        self.normal_node_lock.release()
+        self.normal_nodes_lock.release()
 
         self.active_peers_lock.acquire()
         peer_list = []
@@ -129,9 +129,9 @@ class Server:
     def get_peers_write(self, inc_id):
         print constants.SUPER_PEER_TAG(self.node_id), 'Write Peers asked by', inc_id
         print constants.SUPER_PEER_TAG(self.node_id), 'entered GET_PEERS_WRITE'
-        self.normal_node_lock.acquire()
+        self.normal_nodes_lock.acquire()
         self.normal_nodes_timestamps[inc_id] = time.time()
-        self.normal_node_lock.release()
+        self.normal_nodes_lock.release()
 
         self.active_peers_lock.acquire()
         peer_list = []
@@ -166,10 +166,10 @@ class Server:
             self.active_peers_lock.release()
 
     def add_normal_node(self, node_id):
-        self.normal_node_lock.acquire()
+        self.normal_nodes_lock.acquire()
         self.normal_nodes.add(node_id)
         self.normal_nodes_timestamps[node_id] = time.time()
-        self.normal_node_lock.release()
+        self.normal_nodes_lock.release()
 
     def peer_eligible(self, node_id):
         port = int(node_id.split(':')[1])
@@ -225,11 +225,11 @@ class Server:
         while True:
             print constants.SUPER_PEER_TAG(self.node_id), 'Cleaning normal nodes'
             print constants.SUPER_PEER_TAG(self.node_id), self.normal_nodes
-            self.normal_node_lock.acquire()
+            self.normal_nodes_lock.acquire()
             new_normal = {}
             for normal, last_access in self.normal_nodes_timestamps.items():
                 print constants.SUPER_PEER_TAG(self.node_id), normal, time.time() - last_access
-                if time.time() - last_access > 200:
+                if time.time() - last_access > constants.MAX_OFFLINE_TIME():
                     try:
                         print constants.SUPER_PEER_TAG(self.node_id), normal
                         self.normal_nodes.discard(normal)
@@ -256,14 +256,14 @@ class Server:
             except:
                 print constants.SUPER_PEER_TAG(self.node_id), 'Other server seems down'
 
-            self.normal_node_lock.release()
+            self.normal_nodes_lock.release()
             time.sleep(constants.HEARTBEAT_TIMEOUT())
 
     def select_peers(self):
         while True:
             print constants.SUPER_PEER_TAG(self.node_id), 'Selecting Peers'
             self.active_peers_lock.acquire()
-            self.normal_node_lock.acquire()
+            self.normal_nodes_lock.acquire()
 
             print constants.SUPER_PEER_TAG(self.node_id), self.active_peers
             print constants.SUPER_PEER_TAG(self.node_id), self.normal_nodes
@@ -294,7 +294,7 @@ class Server:
 
             print constants.SUPER_PEER_TAG(self.node_id), 'Selecting Peers Done'
             print constants.SUPER_PEER_TAG(self.node_id), self.active_peers
-            self.normal_node_lock.release()
+            self.normal_nodes_lock.release()
             self.active_peers_lock.release()
 
             time.sleep(constants.SELECT_PEER_TIMEOUT())

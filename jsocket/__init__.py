@@ -20,7 +20,7 @@ class Server(object):
     backlog = 1000
 
     def __init__(self, host, port):
-        self.socket = socket.socket()
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((host, port))
         self.socket.listen(self.backlog)
 
@@ -82,7 +82,7 @@ class Client(object):
     def connect(self, host_port):
         host = host_port.split(':')[0]
         port = int(host_port.split(':')[1])
-        self.socket = socket.socket()
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((host, port))
         return self
 

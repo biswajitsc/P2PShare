@@ -26,7 +26,7 @@ class Peer(threading.Thread):
         self._log_file = open(os.path.join(log_folder, 'log.txt'), 'w')
 
         print >> self._log_file, constants.PEER_TAG, 'Creating peer node'
-        self.sock = jsocket.Server('localhost', self._node_port)
+        self.sock = jsocket.Server(self._node_ip, self._node_port)
 
         ports = [constants.LOGIN_ADD1, constants.LOGIN_ADD2]
         if random.random() >= 0.5:

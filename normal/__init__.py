@@ -21,7 +21,8 @@ Threads of Normal Node
 
 
 class NormalNode(threading.Thread):
-    def __init__(self, id):
+    def __init__(self, id, multimode=False):
+        self.multimode = multimode
         self._node_id = id
         self._node_port = int(id.split(':')[1])
         self._node_ip = id.split(':')[0]
@@ -64,7 +65,7 @@ class NormalNode(threading.Thread):
             self._default_port = ports[1 - ports.index(self._default_port)]
             try:
                 conn.connect(self._default_port)
-            except Exception as e:
+            except Exception:
                 exit(1)
 
         conn.send({
@@ -78,6 +79,9 @@ class NormalNode(threading.Thread):
         thread.start_new_thread(self._listen, ())
         thread.start_new_thread(self._auto_get_write_peers, ())
         while True:
+            if self.multimode:
+                time.sleep(200)
+                continue
             print '$',
             try:
                 command = raw_input().strip().split()
